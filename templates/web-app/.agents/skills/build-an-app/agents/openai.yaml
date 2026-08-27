@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build an app"
+  short_description: "Build and verify this app from its live context"
+  default_prompt: "Use $build-an-app to plan or implement the next verified product change."

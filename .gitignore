@@ -1,0 +1,24 @@
+node_modules/
+dist/
+coverage/
+.tmp/
+generated-smoke/
+*.log
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+!.env.*.example
+.mcp.json
+.codex/config.toml
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Editores y sistema
+.DS_Store
+Thumbs.db
+.vscode/*.local.json
+**/.obsidian/workspace*

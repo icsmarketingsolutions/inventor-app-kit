@@ -1,0 +1,12 @@
+# Ejemplo para <REPO_DE_LA_APP>/.codex/config.toml
+#
+# Copiá este bloque a tu configuración personal y reemplazá únicamente el
+# placeholder del proyecto DEV. `.codex/config.toml` queda ignorado por Git.
+# No lo conviertas en una conexión a producción.
+
+[mcp_servers.supabase_dev]
+url = "https://mcp.supabase.com/mcp?project_ref=REEMPLAZA_CON_REF_DEL_PROYECTO_DEV&read_only=true&features=database,docs"
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 60

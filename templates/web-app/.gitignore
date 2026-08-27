@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.mcp.json
+.codex/config.toml
+supabase/.branches/
+supabase/.temp/
+*.local
+.vscode/*.local.json
+**/.obsidian/workspace*

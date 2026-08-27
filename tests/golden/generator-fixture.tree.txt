@@ -1,0 +1,17 @@
+.agents/
+.agents/skills/
+.agents/skills/project/
+.agents/skills/project/SKILL.md
+.gitattributes
+.gitignore
+.inventor-kit.json
+README.md
+foundry/
+foundry/prompts/
+foundry/prompts/base.md
+package.json
+scripts/
+scripts/foundry.mjs
+scripts/helper.ps1
+src/
+src/project.generated.json

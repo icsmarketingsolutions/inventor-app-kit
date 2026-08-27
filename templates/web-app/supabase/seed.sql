@@ -1,0 +1,1 @@
+-- Intencionalmente vacío. Cada persona crea sus propios datos desde la interfaz.
