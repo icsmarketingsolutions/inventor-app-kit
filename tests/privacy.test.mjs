@@ -56,9 +56,12 @@ test('acepta placeholders en plantillas y correos reservados para ejemplos', () 
     writeFixture(
       root,
       'notes.txt',
-      ['C:\\Users\\<usuario>\\Projects', '/home/<usuario>/Projects', 'noreply@github.com'].join(
-        '\n',
-      ),
+      [
+        'C:\\Users\\<usuario>\\Projects',
+        '/home/<usuario>/Projects',
+        'noreply@github.com',
+        'support@github.com',
+      ].join('\n'),
     );
 
     const result = scanRepository(root);
@@ -222,6 +225,7 @@ test('bloquea archivos de credenciales pero permite variantes de plantilla', () 
     writeFixture(root, '.vscode/settings.local.json', '{}');
     writeFixture(root, '.obsidian/workspace.json', '{}');
     writeFixture(root, '.env.local.example', 'TOKEN=${TOKEN}');
+    writeFixture(root, `.env.${'..'.repeat(100)}.sample`, 'TOKEN=${TOKEN}');
 
     const result = scanRepository(root);
     const fileFindings = result.findings.filter((finding) => finding.rule.startsWith('file.'));
@@ -231,6 +235,10 @@ test('bloquea archivos de credenciales pero permite variantes de plantilla', () 
     assert.equal(fileFindings.filter((finding) => finding.rule === 'file.local-config').length, 2);
     assert.equal(
       fileFindings.some((finding) => finding.path.endsWith('.env.local.example')),
+      false,
+    );
+    assert.equal(
+      fileFindings.some((finding) => finding.path.endsWith('.sample')),
       false,
     );
   });

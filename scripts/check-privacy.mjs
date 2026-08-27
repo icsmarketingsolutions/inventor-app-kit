@@ -121,7 +121,11 @@ function allRegexMatches(regex, value) {
 
 function isAllowedEmail(email) {
   const lower = email.toLocaleLowerCase('en');
-  if (lower === 'git@github.com' || lower === 'noreply@github.com') return true;
+  if (
+    lower === 'git@github.com' ||
+    lower === 'noreply@github.com' ||
+    lower === 'support@github.com'
+  ) return true;
   const domain = lower.slice(lower.lastIndexOf('@') + 1);
   return (
     domain === 'example.com' ||
@@ -198,7 +202,8 @@ function prohibitedFileRule(filePath) {
   if (/^(?:.*\/)?\.vscode\/[^/]*\.local\.json$/i.test(normalized)) return 'file.local-config';
   if (/^(?:.*\/)?\.obsidian\/workspace[^/]*$/i.test(normalized)) return 'file.local-config';
   if (name === '.env' || name.startsWith('.env.')) {
-    if (/\.env(?:\.[^/]+)*\.(?:example|sample|template|dist)$/i.test(normalized)) {
+    const templateSuffixes = ['.example', '.sample', '.template', '.dist'];
+    if (templateSuffixes.some((suffix) => name.endsWith(suffix))) {
       return null;
     }
     return 'file.env';
