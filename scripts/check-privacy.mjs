@@ -121,7 +121,11 @@ function allRegexMatches(regex, value) {
 
 function isAllowedEmail(email) {
   const lower = email.toLocaleLowerCase('en');
-  if (lower === 'git@github.com' || lower === 'noreply@github.com') return true;
+  if (
+    lower === 'git@github.com' ||
+    lower === 'noreply@github.com' ||
+    lower === 'support@github.com'
+  ) return true;
   const domain = lower.slice(lower.lastIndexOf('@') + 1);
   return (
     domain === 'example.com' ||

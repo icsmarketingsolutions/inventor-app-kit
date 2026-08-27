@@ -56,9 +56,12 @@ test('acepta placeholders en plantillas y correos reservados para ejemplos', () 
     writeFixture(
       root,
       'notes.txt',
-      ['C:\\Users\\<usuario>\\Projects', '/home/<usuario>/Projects', 'noreply@github.com'].join(
-        '\n',
-      ),
+      [
+        'C:\\Users\\<usuario>\\Projects',
+        '/home/<usuario>/Projects',
+        'noreply@github.com',
+        'support@github.com',
+      ].join('\n'),
     );
 
     const result = scanRepository(root);
