@@ -4,6 +4,8 @@ Prompt Foundry convierte un objetivo breve en un contrato de trabajo que una IA
 puede ejecutar y verificar. No copia el repositorio al prompt: señala las fuentes
 de verdad y agrega solo conteos Git saneados. Omite rutas absolutas, ramas,
 nombres de archivos y mensajes de commit porque son privados y no confiables.
+Además incorpora un contrato multidispositivo: la preferencia móvil o escritorio
+define prioridades, pero no permite romper el otro contexto.
 
 ## Modos
 

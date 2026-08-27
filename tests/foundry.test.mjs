@@ -37,6 +37,8 @@ test('genera un prompt determinista y apunta a la memoria', (context) => {
   assert.match(first, /memory\/30-directives\/directives\.md/);
   assert.match(first, /\.agents\/skills\/build-an-app\/SKILL\.md/);
   assert.match(first, /memory\/INDEX\.md/);
+  assert.match(first, /Experiencia multidispositivo/);
+  assert.match(first, /360/);
   assert.equal(first.includes(project), false);
   assert.doesNotMatch(first, /Guardia de migraciones Supabase/);
 });

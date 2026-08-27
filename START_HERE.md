@@ -26,7 +26,7 @@ de esa ubicación.
 
 ## 3. Creá la primera app
 
-Copiá el comando y cambiá únicamente los cinco textos entre comillas:
+Copiá el comando y cambiá los cinco textos libres y la preferencia de uso:
 
 ```powershell
 pwsh -NoProfile -File ./scripts/New-InventorApp.ps1 `
@@ -35,11 +35,16 @@ pwsh -NoProfile -File ./scripts/New-InventorApp.ps1 `
   -Problem "Quiero ordenar ideas y convertirlas en prototipos" `
   -Audience "Mi familia y yo" `
   -FirstAction "Registrar un invento" `
+  -PrimaryUse "balanced" `
   -OutputRoot "C:\Proyectos"
 ```
 
 `Slug` es el nombre técnico de la carpeta: minúsculas, números y guiones, sin
-espacios ni tildes. Los cinco textos se guardan en archivos que después podrán
+espacios ni tildes. En `PrimaryUse` elegí `mobile`, `desktop` o `balanced` según
+dónde se usará más. Esto cambia qué experiencia se prioriza, pero la app siempre
+debe seguir funcionando en móvil, tableta y escritorio.
+
+Los cinco textos libres se guardan en archivos que después podrán
 subirse a Git: describí el producto, pero no incluyás nombres de personas, datos
 de clientes, correos, teléfonos ni secretos. El generador nunca sobrescribe una
 carpeta existente.

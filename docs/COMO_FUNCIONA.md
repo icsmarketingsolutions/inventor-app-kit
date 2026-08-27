@@ -30,6 +30,14 @@ Cada app generada contiene:
 El agente entra por el índice y baja únicamente a la rama necesaria. Así evita
 mezclar información vieja o gastar contexto en archivos irrelevantes.
 
+## Experiencia multidispositivo
+
+El generador conserva una preferencia `mobile`, `desktop` o `balanced`. No es una
+lista de dispositivos permitidos: indica dónde priorizar navegación, densidad y
+acciones frecuentes. Vite + React es la base web fija y toda pantalla debe
+seguir siendo responsive, accesible por teclado y usable con tacto, mouse o
+teclado. Los cambios visuales se verifican al menos a 360, 768 y 1440 píxeles.
+
 ## Prompt Foundry
 
 `scripts/foundry.mjs` ensambla un prompt a partir de bloques versionados:

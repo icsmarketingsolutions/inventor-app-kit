@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — 2026-08-27
+
+- Vite + React queda como fundación web explícita.
+- Preferencia por app para priorizar móvil, escritorio o ambos.
+- Contrato responsive y accesible a 360, 768 y 1440 px en Foundry y la skill.
+- CSS base mobile-first con composición adaptativa para pantallas amplias.
+
 ## 0.1.0 — 2026-08-27
 
 - Fundación pública y saneada del kit.

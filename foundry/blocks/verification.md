@@ -6,3 +6,5 @@
 - No des por verificado algo que no pudiste ejecutar. Separá “verificado en vivo” de “pendiente”.
 - Una función pura nueva debe salir con una prueba enfocada.
 - Si falla una dependencia externa, conservá evidencia segura y proponé el próximo paso concreto.
+- Si cambia la interfaz, probá los tamaños y formas de entrada definidos en
+  “Experiencia multidispositivo”; una captura aislada no sustituye el flujo.

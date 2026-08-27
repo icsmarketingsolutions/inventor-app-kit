@@ -7,8 +7,11 @@ Resolver: __INVENTOR_APP_PROBLEM__
 ## Fase 0 — Fundación
 
 - [x] Interfaz inicial y modo demostración.
+- [x] Base responsive para móvil, tableta y escritorio.
 - [x] Supabase Auth, tabla privada, RLS y pruebas.
 - [ ] Verificar el flujo local completo en esta computadora.
+- [ ] Confirmar en uso real que la prioridad `__INVENTOR_PRIMARY_USE__` coincide
+  con el contexto principal de las personas usuarias.
 
 ## Próxima fase
 

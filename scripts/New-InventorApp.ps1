@@ -23,6 +23,10 @@ param(
     [string]$FirstAction,
 
     [Parameter(Mandatory = $true)]
+    [ValidateSet("mobile", "desktop", "balanced")]
+    [string]$PrimaryUse,
+
+    [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [string]$OutputRoot
 )
@@ -202,6 +206,11 @@ if ($relativeStage -ne $stageName) {
 
 $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 $stageCreated = $false
+$primaryUseLabel = switch ($PrimaryUse) {
+    "mobile" { "móvil" }
+    "desktop" { "escritorio" }
+    "balanced" { "móvil y escritorio por igual" }
+}
 
 try {
     [System.IO.Directory]::CreateDirectory($stageFull) | Out-Null
@@ -224,12 +233,14 @@ try {
     Copy-Item -LiteralPath $foundryScript -Destination $stageFoundryScript
 
     $replacements = [ordered]@{
-        "__INVENTOR_APP_NAME__"         = $Name
-        "__INVENTOR_APP_SLUG__"         = $Slug
-        "__INVENTOR_APP_PROBLEM__"      = $Problem
-        "__INVENTOR_APP_AUDIENCE__"     = $Audience
-        "__INVENTOR_APP_FIRST_ACTION__" = $FirstAction
-        "__INVENTOR_KIT_VERSION__"      = $kitVersion
+        "__INVENTOR_APP_NAME__"          = $Name
+        "__INVENTOR_APP_SLUG__"          = $Slug
+        "__INVENTOR_APP_PROBLEM__"       = $Problem
+        "__INVENTOR_APP_AUDIENCE__"      = $Audience
+        "__INVENTOR_APP_FIRST_ACTION__"  = $FirstAction
+        "__INVENTOR_PRIMARY_USE__"       = $PrimaryUse
+        "__INVENTOR_PRIMARY_USE_LABEL__" = $primaryUseLabel
+        "__INVENTOR_KIT_VERSION__"       = $kitVersion
     }
 
     foreach ($file in @(Get-ChildItem -LiteralPath $stageFull -File -Force -Recurse)) {
@@ -254,12 +265,13 @@ try {
     }
 
     $projectData = [ordered]@{
-        schemaVersion = 1
+        schemaVersion = 2
         name          = $Name
         slug          = $Slug
         problem       = $Problem
         audience      = $Audience
         firstAction   = $FirstAction
+        primaryUse    = $PrimaryUse
     }
     $projectDataPath = Join-Path $stageFull "src/project.generated.json"
     [System.IO.Directory]::CreateDirectory((Split-Path -Parent $projectDataPath)) | Out-Null
@@ -305,6 +317,7 @@ $quotedTarget = $targetFull.Replace("'", "''", [System.StringComparison]::Ordina
 @(
     "LISTO: aplicacion creada"
     "Nombre: $Name"
+    "Experiencia principal: $primaryUseLabel"
     "Ruta: $targetFull"
     "Kit: v$kitVersion"
     "Siguiente:"

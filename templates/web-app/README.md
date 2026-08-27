@@ -12,6 +12,10 @@ npm run dev
 La interfaz abre en modo demostración y permite probar el primer flujo. Para
 guardar cuentas y datos con Supabase, seguí [SUPABASE_LOCAL.md](SUPABASE_LOCAL.md).
 
+La fundación usa Vite + React. La experiencia inicial prioriza
+__INVENTOR_PRIMARY_USE_LABEL__, pero debe mantenerse responsive y accesible en
+móvil, tableta y escritorio.
+
 ## Comandos
 
 ```powershell

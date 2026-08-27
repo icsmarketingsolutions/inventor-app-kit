@@ -6,6 +6,9 @@ La fundación fue generada. La interfaz puede abrir en modo demostración sin
 cuentas. Supabase queda listo para validarse localmente siguiendo
 `SUPABASE_LOCAL.md`.
 
+La prioridad inicial es __INVENTOR_PRIMARY_USE_LABEL__. Toda pantalla debe
+seguir funcionando en móvil, tableta y escritorio.
+
 ## Continuar mañana
 
 ```powershell

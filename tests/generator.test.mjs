@@ -31,6 +31,7 @@ function generate(outputRoot, slug = 'taller-de-prueba') {
     '-Problem', 'Ordenar ideas con claridad',
     '-Audience', 'Mi familia',
     '-FirstAction', 'Registrar una idea',
+    '-PrimaryUse', 'mobile',
     '-OutputRoot', outputRoot,
   ], { encoding: 'utf8', timeout: 30_000 });
 }
@@ -42,8 +43,10 @@ test('genera una app completa, personalizada y portable', (context) => {
   const result = generate(outputRoot);
   const app = join(outputRoot, 'taller-de-prueba');
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(JSON.parse(readFileSync(join(app, '.inventor-kit.json'), 'utf8')).kitVersion, '0.1.0');
-  assert.equal(JSON.parse(readFileSync(join(app, 'src', 'project.generated.json'), 'utf8')).firstAction, 'Registrar una idea');
+  assert.equal(JSON.parse(readFileSync(join(app, '.inventor-kit.json'), 'utf8')).kitVersion, '0.2.0');
+  const projectData = JSON.parse(readFileSync(join(app, 'src', 'project.generated.json'), 'utf8'));
+  assert.equal(projectData.firstAction, 'Registrar una idea');
+  assert.equal(projectData.primaryUse, 'mobile');
   for (const required of [
     'AGENTS.md',
     'CLAUDE.md',

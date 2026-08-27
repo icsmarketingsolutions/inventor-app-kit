@@ -42,13 +42,14 @@ function New-TestKit {
     [System.IO.Directory]::CreateDirectory($foundry) | Out-Null
 
     Copy-Item -LiteralPath $script:GeneratorSource -Destination (Join-Path $scripts "New-InventorApp.ps1")
-    Write-TestText -Path (Join-Path $Root "VERSION") -Content "0.1.0`n"
+    Write-TestText -Path (Join-Path $Root "VERSION") -Content "0.2.0`n"
     Write-TestText -Path (Join-Path $template "README.md") -Content @'
 # __INVENTOR_APP_NAME__
 Slug: __INVENTOR_APP_SLUG__
 Problema: __INVENTOR_APP_PROBLEM__
 Audiencia: __INVENTOR_APP_AUDIENCE__
 Primera accion: __INVENTOR_APP_FIRST_ACTION__
+Uso principal: __INVENTOR_PRIMARY_USE__ (__INVENTOR_PRIMARY_USE_LABEL__)
 Kit: __INVENTOR_KIT_VERSION__
 '@
     Write-TestText -Path (Join-Path $template "package.json") -Content '{"name":"__INVENTOR_APP_SLUG__"}'
@@ -71,7 +72,8 @@ function Invoke-TestGenerator {
         [string]$Slug = "mis-inventos",
         [string]$Problem = "Ordenar ideas",
         [string]$Audience = "Mi familia",
-        [string]$FirstAction = "Registrar un invento"
+        [string]$FirstAction = "Registrar un invento",
+        [string]$PrimaryUse = "balanced"
     )
 
     $arguments = @(
@@ -82,6 +84,7 @@ function Invoke-TestGenerator {
         "-Problem", $Problem,
         "-Audience", $Audience,
         "-FirstAction", $FirstAction,
+        "-PrimaryUse", $PrimaryUse,
         "-OutputRoot", $OutputRoot
     )
     $output = @(& $script:PwshPath @arguments 2>&1)
@@ -134,22 +137,24 @@ Describe "New-InventorApp.ps1" {
 
         $manifest = Get-Content -Raw -LiteralPath (Join-Path $target ".inventor-kit.json") | ConvertFrom-Json
         $manifest.schemaVersion | Should -Be 1
-        $manifest.kitVersion | Should -Be "0.1.0"
+        $manifest.kitVersion | Should -Be "0.2.0"
         $manifest.template | Should -Be "web-app"
 
         $projectData = Get-Content -Raw -LiteralPath (Join-Path $target "src/project.generated.json") | ConvertFrom-Json
-        $projectData.schemaVersion | Should -Be 1
+        $projectData.schemaVersion | Should -Be 2
         $projectData.name | Should -Be "Mis inventos"
         $projectData.problem | Should -Be "Ordenar ideas"
         $projectData.audience | Should -Be "Mi familia"
         $projectData.firstAction | Should -Be "Registrar un invento"
+        $projectData.primaryUse | Should -Be "balanced"
 
         $quotedTarget = $target.Replace("'", "''")
         $expected = @(
             "LISTO: aplicacion creada"
             "Nombre: Mis inventos"
+            "Experiencia principal: móvil y escritorio por igual"
             "Ruta: $target"
-            "Kit: v0.1.0"
+            "Kit: v0.2.0"
             "Siguiente:"
             "  Set-Location -LiteralPath '$quotedTarget'"
             "  npm ci"
@@ -186,6 +191,23 @@ Describe "New-InventorApp.ps1" {
         (Get-Content -Raw -LiteralPath $sentinel) | Should -Be "intacto"
         @(Get-ChildItem -LiteralPath $target -Force).Count | Should -Be 1
         @(Get-ChildItem -LiteralPath $outputRoot -Force -Filter ".inventor-kit-tmp-*").Count | Should -Be 0
+    }
+
+    It "guarda una preferencia de uso válida y rechaza valores desconocidos" {
+        $result = Invoke-TestGenerator -KitRoot $kitRoot -OutputRoot $outputRoot -PrimaryUse "desktop"
+        $target = Join-Path $outputRoot "mis-inventos"
+        $projectData = Get-Content -Raw -LiteralPath (Join-Path $target "src/project.generated.json") | ConvertFrom-Json
+        $readme = Get-Content -Raw -LiteralPath (Join-Path $target "README.md")
+
+        $result.ExitCode | Should -Be 0
+        $projectData.primaryUse | Should -Be "desktop"
+        $readme.Contains("Uso principal: desktop (escritorio)") | Should -Be $true
+
+        $invalidRoot = Join-Path $caseRoot "invalid-output"
+        [System.IO.Directory]::CreateDirectory($invalidRoot) | Out-Null
+        $invalid = Invoke-TestGenerator -KitRoot $kitRoot -OutputRoot $invalidRoot -PrimaryUse "television"
+        ($invalid.ExitCode -ne 0) | Should -Be $true
+        (Test-Path -LiteralPath (Join-Path $invalidRoot "mis-inventos")) | Should -Be $false
     }
 
     It "no copia dependencias, builds ni configuracion local" {

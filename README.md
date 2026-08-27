@@ -7,7 +7,7 @@ cero cada vez. El kit reúne cuatro piezas:
    Claude a partir del proyecto real.
 2. **Memoria viva:** decisiones, conocimiento, directivas y reportes en Markdown.
 3. **Método de trabajo:** planificar, construir, verificar, documentar y cerrar.
-4. **Fundación técnica:** React, TypeScript, Supabase, RLS, pruebas y CI.
+4. **Fundación técnica:** Vite, React, TypeScript, Supabase, RLS, pruebas y CI.
 
 No contiene cuentas, credenciales, proyectos ni datos de ninguna persona. Cada
 usuario crea su propia memoria y sus propios proyectos.
@@ -23,6 +23,8 @@ usuario crea su propia memoria y sus propios proyectos.
 El generador produce un repo independiente con:
 
 - una aplicación funcional para registrar inventos;
+- una preferencia inicial para móvil, escritorio o uso equilibrado, sin excluir
+  ningún tamaño de pantalla;
 - autenticación y datos en Supabase;
 - migración reproducible, RLS y pruebas de base de datos;
 - `CLAUDE.md`, `AGENTS.md`, plan, árbol y skill;
@@ -48,6 +50,7 @@ pwsh -NoProfile -File ./scripts/New-InventorApp.ps1 `
   -Problem "Quiero ordenar ideas y convertirlas en prototipos" `
   -Audience "Mi familia y yo" `
   -FirstAction "Registrar un invento" `
+  -PrimaryUse "balanced" `
   -OutputRoot "C:\Proyectos"
 
 # Forjar un prompt para trabajar en ella
@@ -64,15 +67,17 @@ node ./scripts/foundry.mjs `
 - Las decisiones viven en archivos, no en la memoria de un chat.
 - Cambios grandes empiezan con un plan aprobado.
 - Compilar no basta: cada flujo se prueba funcionando.
+- La experiencia principal define prioridades, no compatibilidad: toda interfaz
+  debe funcionar con tacto, mouse y teclado en móvil, tableta y escritorio.
 - Supabase remoto y producción nunca se modifican sin aprobación explícita.
 - Secretos solo en `.env`; jamás en Git ni en prompts.
 
-## Alcance de `v0.1.0`
+## Alcance de `v0.2.0`
 
 Incluye onboarding y diagnóstico verificados para Windows. El generador usa
 PowerShell 7 y Foundry usa Node, por lo que una persona avanzada puede ejecutarlos
 en macOS/Linux después de preparar equivalentes manuales; esa ruta todavía no
-tiene onboarding ni smoke oficial en `v0.1.0`. El starter usa Supabase local con Docker antes de conectar
+tiene onboarding ni smoke oficial en `v0.2.0`. El starter usa Supabase local con Docker antes de conectar
 un proyecto remoto. PWA, pagos, correo, observabilidad y automatizaciones se
 agregan cuando el primer flujo ya está validado.
 
