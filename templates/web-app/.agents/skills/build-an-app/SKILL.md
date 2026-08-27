@@ -59,8 +59,15 @@ sustituto. Cualquier cambio remoto requiere aprobación explícita con project r
 npm run lint
 npm test
 npm run build
+npm run privacy
 ```
 
 Además, probá en vivo el flujo afectado. Si cambia arquitectura, tablas o flujos,
 actualizá `docs/ARBOL_CONOCIMIENTO.md`. Registrá decisiones duraderas, directivas
 y un reporte de sesión donde corresponda, y dejá `HANDOFF.md` fiel al estado real.
+
+Ejecutá `npm run privacy` con la raíz de la app como directorio actual. El gate
+escanea intencionalmente el directorio de trabajo, no la carpeta donde vive el
+script: invocarlo por ruta absoluta desde una carpeta padre auditaría el lugar
+equivocado. Para revisar un clon externo, entrá primero al clon y recién entonces
+ejecutá el gate.
