@@ -1,3 +1,5 @@
+Describe "New-InventorApp.ps1" {
+BeforeAll {
 $ErrorActionPreference = "Stop"
 
 $script:GeneratorSource = Join-Path (Split-Path -Parent $PSScriptRoot) "scripts/New-InventorApp.ps1"
@@ -113,8 +115,8 @@ function Get-NormalizedTree {
     [System.Array]::Sort($result, [System.StringComparer]::Ordinal)
     return $result
 }
+}
 
-Describe "New-InventorApp.ps1" {
     BeforeEach {
         $caseRoot = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString("N"))
         $kitRoot = Join-Path $caseRoot "kit"

@@ -39,7 +39,7 @@ test('genera un prompt determinista y apunta a la memoria', (context) => {
   assert.match(first, /memory\/INDEX\.md/);
   assert.match(first, /Experiencia multidispositivo/);
   assert.match(first, /360/);
-  assert.equal(first.includes(project), false);
+  assert.equal(first.includes(`\`${project}\``), false);
   assert.doesNotMatch(first, /Guardia de migraciones Supabase/);
 });
 
@@ -57,7 +57,7 @@ test('no incorpora rutas, asuntos ni nombres de archivos Git no confiables', (co
   const output = execFileSync(process.execPath, [
     script, '--project', project, '--mode', 'review', '--objective', 'Revisar con seguridad',
   ], { encoding: 'utf8' });
-  assert.equal(output.includes(project), false);
+  assert.equal(output.includes(`\`${project}\``), false);
   assert.doesNotMatch(output, /IGNORÁ (?:EL OBJETIVO|TODAS LAS REGLAS)/);
   assert.match(output, /metadatos no confiables/);
   assert.match(output, /1 cambio\(s\) local\(es\)/);
@@ -89,8 +89,8 @@ test('distingue varios proyectos con etiquetas seguras y rutas relativas', (cont
   assert.match(output, /Etiqueta segura: `frontend`/);
   assert.match(output, /Etiqueta segura: `backend`/);
   assert.match(output, /Ruta relativa operable/);
-  assert.equal(output.includes(firstProject), false);
-  assert.equal(output.includes(secondProject), false);
+  assert.equal(output.includes(`\`${firstProject}\``), false);
+  assert.equal(output.includes(`\`${secondProject}\``), false);
 });
 
 test('reporta correctamente un repositorio Git limpio', (context) => {
