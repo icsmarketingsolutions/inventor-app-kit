@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.foundry-output/
 .env
 .env.*
 !.env.example

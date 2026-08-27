@@ -141,16 +141,35 @@ test('analiza el blob staged aunque el worktree ya se haya limpiado', () => {
   });
 });
 
-test('revisa la identidad Git prospectiva incluso antes del primer commit', () => {
+test('ignora la identidad local hasta que forme parte de un commit publicable', () => {
   withTempDirectory((root) => {
     const privateEmail = ['future-author', '@', 'private-company.dev'].join('');
     initializeRepository(root, privateEmail);
 
-    const result = scanRepository(root);
-    assert.ok(result.findings.some(
+    const beforeCommit = scanRepository(root);
+    assert.equal(beforeCommit.findings.some(
+      (finding) => finding.scope === 'git-metadata' && finding.rule === 'privacy.email',
+    ), false);
+    assert.equal(beforeCommit.stats.commits, 0);
+
+    writeFixture(root, 'README.md', '# Proyecto público\n');
+    git(root, 'add', 'README.md');
+    git(root, 'commit', '-m', 'chore: iniciar proyecto');
+
+    const afterCommit = scanRepository(root);
+    assert.ok(afterCommit.findings.some(
       (finding) => finding.scope === 'git-metadata' && finding.rule === 'privacy.email',
     ));
-    assert.equal(result.stats.commits, 0);
+    assert.equal(afterCommit.stats.commits, 1);
+  });
+});
+
+test('bloquea si existe .git pero Git no puede inspeccionar el historial', () => {
+  withTempDirectory((root) => {
+    writeFixture(root, '.git', 'gitdir: repositorio-inexistente\n');
+    writeFixture(root, 'README.md', '# Checkout visible\n');
+
+    assert.throws(() => scanRepository(root), /git-command-failed/);
   });
 });
 

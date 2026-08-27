@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
@@ -128,4 +128,20 @@ test('rechaza un modo desconocido sin crear un prompt', () => {
   const result = spawnSync(process.execPath, [script, '--mode', 'inventar', '--objective', 'x'], { encoding: 'utf8' });
   assert.equal(result.status, 2);
   assert.match(result.stderr, /Modo inválido/);
+});
+
+test('crea la carpeta de salida sin imprimir una ruta absoluta', (context) => {
+  const project = makeProject();
+  const outputRoot = mkdtempSync(join(tmpdir(), 'inventor-foundry-output-'));
+  context.after(() => {
+    rmSync(project, { recursive: true, force: true });
+    rmSync(outputRoot, { recursive: true, force: true });
+  });
+  const output = join(outputRoot, 'prompts', 'actual.md');
+  const message = execFileSync(process.execPath, [
+    script, '--project', project, '--mode', 'plan', '--objective', 'Crear flujo', '--out', output,
+  ], { encoding: 'utf8' });
+  assert.equal(existsSync(output), true);
+  assert.equal(message.includes(output), false);
+  assert.match(message, /ruta indicada por --out/);
 });

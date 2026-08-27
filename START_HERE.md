@@ -74,7 +74,8 @@ Para un cambio grande, primero generá un prompt de plan:
 node ./scripts/foundry.mjs `
   --project 'C:\Proyectos\mis-inventos' `
   --mode plan `
-  --objective 'Describí aquí el siguiente cambio'
+  --objective 'Describí aquí el siguiente cambio' `
+  --out .foundry-output/PROMPT_ACTUAL.md
 ```
 
 ## Cómo continuar mañana

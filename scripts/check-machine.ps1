@@ -60,10 +60,30 @@ function Get-DockerCommandPath {
     return $null
 }
 
+function Get-GitHubCommandPath {
+    $command = Get-Command -Name 'gh' -ErrorAction SilentlyContinue
+    if ($null -ne $command) {
+        return $command.Source
+    }
+
+    if ($IsWindows) {
+        $programFiles = [Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFiles)
+        if (-not [string]::IsNullOrWhiteSpace($programFiles)) {
+            $systemGitHubCli = Join-Path $programFiles 'GitHub CLI/gh.exe'
+            if ([System.IO.File]::Exists($systemGitHubCli)) {
+                return $systemGitHubCli
+            }
+        }
+    }
+
+    return $null
+}
+
 function Invoke-ExternalCapture {
     param(
         [Parameter(Mandatory)][string]$FilePath,
-        [Parameter(Mandatory)][string[]]$Arguments
+        [Parameter(Mandatory)][string[]]$Arguments,
+        [ValidateRange(1000, 60000)][int]$TimeoutMilliseconds = 10000
     )
 
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
@@ -76,16 +96,38 @@ function Invoke-ExternalCapture {
         $startInfo.ArgumentList.Add($argument)
     }
 
-    $process = [System.Diagnostics.Process]::new()
-    $process.StartInfo = $startInfo
-    $null = $process.Start()
-    $standardOutput = $process.StandardOutput.ReadToEnd()
-    $standardError = $process.StandardError.ReadToEnd()
-    $process.WaitForExit()
-    return [pscustomobject]@{
-        ExitCode = $process.ExitCode
-        Output   = $standardOutput.Trim()
-        Error    = $standardError.Trim()
+    $process = $null
+    try {
+        $process = [System.Diagnostics.Process]::new()
+        $process.StartInfo = $startInfo
+        $null = $process.Start()
+        if (-not $process.WaitForExit($TimeoutMilliseconds)) {
+            try { $process.Kill($true) } catch { }
+            return [pscustomobject]@{
+                ExitCode = -1
+                Output   = ''
+                Error    = 'El proceso no respondió a tiempo.'
+            }
+        }
+        $standardOutput = $process.StandardOutput.ReadToEnd()
+        $standardError = $process.StandardError.ReadToEnd()
+        return [pscustomobject]@{
+            ExitCode = $process.ExitCode
+            Output   = $standardOutput.Trim()
+            Error    = $standardError.Trim()
+        }
+    }
+    catch {
+        return [pscustomobject]@{
+            ExitCode = -1
+            Output   = ''
+            Error    = 'El proceso no pudo iniciarse.'
+        }
+    }
+    finally {
+        if ($null -ne $process) {
+            $process.Dispose()
+        }
     }
 }
 
@@ -110,13 +152,14 @@ else {
 
 if (Test-AvailableCommand -Name 'node') {
     $nodeVersion = (& node --version 2>$null).Trim()
-    $nodeMajorText = $nodeVersion.TrimStart('v').Split('.')[0]
-    $nodeMajor = 0
-    if ([int]::TryParse($nodeMajorText, [ref]$nodeMajor) -and $nodeMajor -eq 24) {
+    $nodeSemanticVersion = $null
+    $nodeVersionParsed = [Version]::TryParse($nodeVersion.TrimStart('v'), [ref]$nodeSemanticVersion)
+    $minimumNodeVersion = [Version]'24.18.1'
+    if ($nodeVersionParsed -and $nodeSemanticVersion.Major -eq 24 -and $nodeSemanticVersion -ge $minimumNodeVersion) {
         Write-Check -State 'OK' -Name 'Node.js' -Detail ("{0} (24 LTS)." -f $nodeVersion)
     }
     else {
-        Write-Check -State 'FALTA' -Name 'Node.js' -Detail ("Se requiere 24 LTS; se detectó {0}." -f $nodeVersion)
+        Write-Check -State 'FALTA' -Name 'Node.js' -Detail ("Se requiere 24 LTS actualizado (24.18.1 o posterior); se detectó {0}." -f $nodeVersion)
     }
 }
 else {
@@ -148,9 +191,10 @@ else {
     Write-Check -State 'FALTA' -Name 'Git' -Detail 'No se encontró el comando git.'
 }
 
-if (Test-AvailableCommand -Name 'gh') {
-    $null = & gh auth status *> $null
-    if ($LASTEXITCODE -eq 0) {
+$gitHubCommandPath = Get-GitHubCommandPath
+if ($null -ne $gitHubCommandPath) {
+    $gitHubStatus = Invoke-ExternalCapture -FilePath $gitHubCommandPath -Arguments @('auth', 'status')
+    if ($gitHubStatus.ExitCode -eq 0) {
         Write-Check -State 'OK' -Name 'GitHub CLI' -Detail 'Instalado y autenticado (identidad oculta).'
     }
     else {

@@ -47,6 +47,24 @@ function Assert-TemplateValue {
     if ($Value -match '[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]') {
         throw "El valor de '$Label' contiene caracteres de control no permitidos."
     }
+    if ($Value -match '[\r\n]') {
+        throw "El valor de '$Label' debe escribirse en una sola linea."
+    }
+    $maximumLength = switch ($Label) {
+        "Name" { 120 }
+        "Problem" { 2000 }
+        "Audience" { 200 }
+        "FirstAction" { 200 }
+        default { 2000 }
+    }
+    if ($Value.Length -gt $maximumLength) {
+        throw "El valor de '$Label' supera el maximo de $maximumLength caracteres."
+    }
+    if ($Value -match '^\s{0,3}(?:[#>|]|[-+*]\s|\d+[.)]\s|`{3}|~{3})' -or
+        $Value -match '::[A-Za-z]' -or
+        $Value -match '<\/?(?:system|assistant|user|developer)\b') {
+        throw "El valor de '$Label' contiene sintaxis de instrucciones no permitida."
+    }
     if ($Value.Contains("__INVENTOR_", [System.StringComparison]::Ordinal)) {
         throw "El valor de '$Label' no puede contener el prefijo reservado '__INVENTOR_'."
     }
@@ -146,7 +164,7 @@ if ($Slug -match '^(con|prn|aux|nul|com[1-9]|lpt[1-9])$') {
 $kitRoot = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $templateRoot = Join-Path $kitRoot "templates/web-app"
 $foundryRoot = Join-Path $kitRoot "foundry"
-$foundryScript = Join-Path $kitRoot "scripts/foundry.mjs"
+$portableScriptNames = @("foundry.mjs", "check-privacy.mjs", "redact-supabase-output.mjs")
 $versionFile = Join-Path $kitRoot "VERSION"
 
 if (-not [System.IO.Directory]::Exists($templateRoot)) {
@@ -155,8 +173,11 @@ if (-not [System.IO.Directory]::Exists($templateRoot)) {
 if (-not [System.IO.Directory]::Exists($foundryRoot)) {
     throw "Falta la biblioteca Foundry obligatoria: $foundryRoot"
 }
-if (-not [System.IO.File]::Exists($foundryScript)) {
-    throw "Falta el lanzador Foundry obligatorio: $foundryScript"
+foreach ($scriptName in $portableScriptNames) {
+    $portableScript = Join-Path $kitRoot "scripts/$scriptName"
+    if (-not [System.IO.File]::Exists($portableScript)) {
+        throw "Falta el script portable obligatorio: $portableScript"
+    }
 }
 if (-not [System.IO.File]::Exists($versionFile)) {
     throw "Falta VERSION en la raiz del kit."
@@ -169,11 +190,14 @@ if ($kitVersion -notmatch '^\d+\.\d+\.\d+$') {
 
 Assert-NoLinks -SourcePath $templateRoot
 Assert-NoLinks -SourcePath $foundryRoot
-$foundryScriptItem = Get-Item -LiteralPath $foundryScript -Force
-$foundryScriptLink = $foundryScriptItem.PSObject.Properties["LinkType"]
-if (($null -ne $foundryScriptLink -and $null -ne $foundryScriptLink.Value) -or
-    (($foundryScriptItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0)) {
-    throw "El lanzador Foundry no puede ser un enlace simbolico o reparse point: $foundryScript"
+foreach ($scriptName in $portableScriptNames) {
+    $portableScript = Join-Path $kitRoot "scripts/$scriptName"
+    $portableScriptItem = Get-Item -LiteralPath $portableScript -Force
+    $portableScriptLink = $portableScriptItem.PSObject.Properties["LinkType"]
+    if (($null -ne $portableScriptLink -and $null -ne $portableScriptLink.Value) -or
+        (($portableScriptItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0)) {
+        throw "Un script portable no puede ser enlace simbolico o reparse point: $portableScript"
+    }
 }
 
 $resolvedOutputRoot = Resolve-Path -LiteralPath $OutputRoot -ErrorAction Stop
@@ -226,11 +250,13 @@ try {
 
     $stageScripts = Join-Path $stageFull "scripts"
     [System.IO.Directory]::CreateDirectory($stageScripts) | Out-Null
-    $stageFoundryScript = Join-Path $stageScripts "foundry.mjs"
-    if (Test-Path -LiteralPath $stageFoundryScript) {
-        throw "El template web-app no debe contener 'scripts/foundry.mjs'; su unico origen es la raiz del kit."
+    foreach ($scriptName in $portableScriptNames) {
+        $stagePortableScript = Join-Path $stageScripts $scriptName
+        if (Test-Path -LiteralPath $stagePortableScript) {
+            throw "El template web-app no debe contener 'scripts/$scriptName'; su unico origen es la raiz del kit."
+        }
+        Copy-Item -LiteralPath (Join-Path $kitRoot "scripts/$scriptName") -Destination $stagePortableScript
     }
-    Copy-Item -LiteralPath $foundryScript -Destination $stageFoundryScript
 
     $replacements = [ordered]@{
         "__INVENTOR_APP_NAME__"          = $Name

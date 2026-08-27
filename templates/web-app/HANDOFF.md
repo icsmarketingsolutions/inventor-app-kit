@@ -18,5 +18,5 @@ npm run dev
 Antes de una funcionalidad grande:
 
 ```powershell
-node ./scripts/foundry.mjs --project . --mode plan --objective "Siguiente resultado"
+node ./scripts/foundry.mjs --project . --mode plan --objective "Siguiente resultado" --out .foundry-output/PROMPT_ACTUAL.md
 ```

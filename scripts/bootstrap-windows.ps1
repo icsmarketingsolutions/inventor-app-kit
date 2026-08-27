@@ -55,7 +55,7 @@ function Install-WingetPackage {
 $packages = @(
     [pscustomobject]@{ Id = 'Git.Git'; Label = 'Git'; Version = $null },
     [pscustomobject]@{ Id = 'GitHub.cli'; Label = 'GitHub CLI'; Version = $null },
-    [pscustomobject]@{ Id = 'OpenJS.NodeJS.LTS'; Label = 'Node.js 24 LTS'; Version = '24.18.0' },
+    [pscustomobject]@{ Id = 'OpenJS.NodeJS.LTS'; Label = 'Node.js 24 LTS'; Version = '24.19.0' },
     [pscustomobject]@{ Id = 'Docker.DockerDesktop'; Label = 'Docker Desktop'; Version = $null }
 )
 

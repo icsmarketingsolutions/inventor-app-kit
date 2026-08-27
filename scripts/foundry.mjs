@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -173,8 +173,9 @@ try {
     const prompt = buildPrompt(arguments_);
     if (arguments_.out) {
       const output = isAbsolute(arguments_.out) ? arguments_.out : resolve(arguments_.out);
+      mkdirSync(dirname(output), { recursive: true });
       writeFileSync(output, prompt, 'utf8');
-      process.stdout.write(`Prompt creado: ${output}\n`);
+      process.stdout.write('Prompt creado en la ruta indicada por --out.\n');
     } else {
       process.stdout.write(prompt);
     }

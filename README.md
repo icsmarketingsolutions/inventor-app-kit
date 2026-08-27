@@ -14,6 +14,8 @@ usuario crea su propia memoria y sus propios proyectos.
 
 ## Por dónde empezar
 
+- **La primera computadora de tu papá:** pegá el
+  [primer prompt completo](setup/PROMPT_COMPUTADORA_NUEVA.md) en Codex.
 - **Computadora Windows nueva:** seguí [setup/COMPUTADORA_NUEVA.md](setup/COMPUTADORA_NUEVA.md).
 - **Windows con las herramientas listas:** abrí [START_HERE.md](START_HERE.md).
 - **Querés entender el sistema:** leé [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md).
@@ -57,7 +59,8 @@ pwsh -NoProfile -File ./scripts/New-InventorApp.ps1 `
 node ./scripts/foundry.mjs `
   --project "C:\Proyectos\mis-inventos" `
   --mode plan `
-  --objective "Agregar fotos a cada invento"
+  --objective "Agregar fotos a cada invento" `
+  --out .foundry-output/PROMPT_ACTUAL.md
 ```
 
 ## Principios
@@ -72,12 +75,12 @@ node ./scripts/foundry.mjs `
 - Supabase remoto y producción nunca se modifican sin aprobación explícita.
 - Secretos solo en `.env`; jamás en Git ni en prompts.
 
-## Alcance de `v0.2.0`
+## Alcance de `v0.2.1`
 
 Incluye onboarding y diagnóstico verificados para Windows. El generador usa
 PowerShell 7 y Foundry usa Node, por lo que una persona avanzada puede ejecutarlos
 en macOS/Linux después de preparar equivalentes manuales; esa ruta todavía no
-tiene onboarding ni smoke oficial en `v0.2.0`. El starter usa Supabase local con Docker antes de conectar
+tiene onboarding ni smoke oficial en `v0.2.1`. El starter usa Supabase local con Docker antes de conectar
 un proyecto remoto. PWA, pagos, correo, observabilidad y automatizaciones se
 agregan cuando el primer flujo ya está validado.
 

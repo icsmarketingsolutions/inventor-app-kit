@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1 — 2026-08-27
+
+- Auditoría pública multiagente: privacidad, historial, cadena de suministro, frontend y Supabase.
+- Privacy gate falla cerrado si Git no puede inspeccionar el historial y ya no confunde la identidad
+  local sin publicar con contenido del repositorio.
+- Starter endurecido con HTTPS remoto obligatorio, errores públicos normalizados, mutaciones sin doble
+  envío, timestamps de base de datos y contador identity no observable.
+- CI sin credenciales Git persistentes, salida local de Supabase redactada, lint/advisors de base y
+  privacy gate dentro de cada app generada.
+- Dependabot semanal para npm y GitHub Actions.
+- Prompt canónico para preparar la primera computadora, clonar el repo y verificar el flujo completo.
+
 ## 0.2.0 — 2026-08-27
 
 - Vite + React queda como fundación web explícita.

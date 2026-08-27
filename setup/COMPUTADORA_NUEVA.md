@@ -106,7 +106,8 @@ pwsh -NoProfile -File ./scripts/check-machine.ps1
 Cada requisito aparece como `OK`, `FALTA` o `INFO`. Corregí todo lo marcado
 `FALTA` y repetí el comando. En particular:
 
-- Node debe empezar por `v24.`.
+- Node debe ser 24 LTS y, como mínimo, `v24.18.1`; el bootstrap fija una revisión
+  disponible más reciente.
 - Git debe tener nombre y correo configurados, aunque el chequeo nunca los
   muestra.
 - Docker Desktop debe estar abierto.

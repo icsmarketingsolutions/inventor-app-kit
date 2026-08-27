@@ -11,7 +11,9 @@ foundry/prompts/
 foundry/prompts/base.md
 package.json
 scripts/
+scripts/check-privacy.mjs
 scripts/foundry.mjs
 scripts/helper.ps1
+scripts/redact-supabase-output.mjs
 src/
 src/project.generated.json

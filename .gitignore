@@ -3,6 +3,7 @@ dist/
 coverage/
 .tmp/
 generated-smoke/
+.foundry-output/
 *.log
 
 # Secretos y configuración local

@@ -11,6 +11,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint . --deny-warnings",
     "test": "vitest run",
+    "privacy": "node ./scripts/check-privacy.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

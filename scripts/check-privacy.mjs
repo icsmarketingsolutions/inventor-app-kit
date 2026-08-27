@@ -403,8 +403,9 @@ function runGit(root, args, { allowFailure = false, encoding = 'utf8' } = {}) {
 
 function hasOwnGitRepository(root) {
   if (!existsSync(join(root, '.git'))) return false;
-  const result = runGit(root, ['rev-parse', '--is-inside-work-tree'], { allowFailure: true });
-  return result?.trim() === 'true';
+  const result = runGit(root, ['rev-parse', '--is-inside-work-tree']);
+  if (result.trim() !== 'true') throw new PrivacyGateError('git-worktree-invalid');
+  return true;
 }
 
 function walkFiles(root, current = root, output = []) {
@@ -483,11 +484,6 @@ function parseTreeRecord(record) {
 }
 
 function scanGitMetadata(root, commits, state) {
-  for (const key of ['user.name', 'user.email']) {
-    const configured = runGit(root, ['config', '--get', key], { allowFailure: true });
-    if (configured) scanText(configured, { scope: 'git-metadata', path: '<git-config>' }, state);
-  }
-
   for (const commit of commits) {
     const raw = runGit(
       root,

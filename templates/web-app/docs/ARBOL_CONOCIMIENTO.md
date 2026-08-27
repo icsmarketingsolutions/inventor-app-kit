@@ -14,6 +14,7 @@
   respuestas pendientes y vacía los datos antes de cargar la nueva sesión.
 - `src/lib/supabase.ts`: cliente publicable; nunca service role.
 - `src/lib/inventions.ts`: validación y normalización puras.
+- `src/lib/operation-guard.ts`: descarta respuestas obsoletas y evita mutaciones simultáneas.
 - `src/project.generated.json`: contexto visible generado desde las respuestas iniciales.
 - UI responsive desde 320 px; los cambios visuales se recorren a 360, 768 y
   1440 px con teclado y controles táctiles.
@@ -22,12 +23,16 @@
 
 - `public.inventions`: ideas privadas por `user_id`.
 - RLS separada para select, insert, update y delete, con ownership inmutable por política.
+- La secuencia identity queda interna: `anon` y `authenticated` no pueden leerla ni alterarla.
+- Un trigger conserva `created_at` y calcula `updated_at` en la base; el navegador no controla esos valores.
 - `supabase/tests/`: contrato allow/deny de las cuatro operaciones y aislamiento entre usuarios.
 
 ## Operación
 
 - Desarrollo: Vite + React.
 - Backend local: Supabase CLI sobre Docker.
+- Analytics y Vector locales están desactivados porque esta app no los consume; así el stack mínimo
+  no arranca servicios innecesarios.
 - Calidad: oxlint, Vitest, TypeScript y build.
 - Memoria: entrada por `memory/INDEX.md`, Markdown versionado y sanitizado.
 - Contrato de agentes: skill canónico en `.agents/skills/build-an-app/` y puente para Claude.

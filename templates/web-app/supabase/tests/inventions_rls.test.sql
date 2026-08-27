@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(43);
 
 select has_table('public', 'inventions', 'existe la tabla inventions');
 select has_pk('public', 'inventions', 'inventions tiene llave primaria');
@@ -13,6 +13,16 @@ select columns_are(
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.inventions'::regclass),
   'RLS está habilitado');
+select ok(to_regprocedure('public.set_inventions_timestamps()') is not null,
+  'existe la función de timestamps controlada por la base');
+select ok(
+  exists (
+    select 1 from pg_trigger
+    where tgrelid = 'public.inventions'::regclass
+      and tgname = 'set_inventions_timestamps'
+      and not tgisinternal
+  ),
+  'existe el trigger de timestamps');
 select ok(not has_table_privilege('anon', 'public.inventions', 'select'),
   'anon no puede leer inventions');
 select ok(not has_table_privilege('anon', 'public.inventions', 'insert'),
@@ -21,8 +31,34 @@ select ok(not has_table_privilege('anon', 'public.inventions', 'update'),
   'anon no puede actualizar inventions');
 select ok(not has_table_privilege('anon', 'public.inventions', 'delete'),
   'anon no puede eliminar inventions');
-select ok(has_table_privilege('authenticated', 'public.inventions', 'select,insert,update,delete'),
-  'authenticated tiene únicamente la superficie CRUD requerida');
+select ok(has_table_privilege('authenticated', 'public.inventions', 'select'),
+  'authenticated puede leer inventions');
+select ok(has_table_privilege('authenticated', 'public.inventions', 'insert'),
+  'authenticated puede insertar inventions');
+select ok(has_table_privilege('authenticated', 'public.inventions', 'update'),
+  'authenticated puede actualizar inventions');
+select ok(has_table_privilege('authenticated', 'public.inventions', 'delete'),
+  'authenticated puede eliminar inventions');
+select ok(not has_table_privilege('authenticated', 'public.inventions', 'truncate'),
+  'authenticated no puede truncar inventions');
+select ok(not has_table_privilege('authenticated', 'public.inventions', 'references'),
+  'authenticated no puede crear referencias sobre inventions');
+select ok(not has_table_privilege('authenticated', 'public.inventions', 'trigger'),
+  'authenticated no puede crear triggers en inventions');
+select ok(not has_table_privilege('authenticated', 'public.inventions', 'maintain'),
+  'authenticated no puede ejecutar mantenimiento en inventions');
+select ok(not has_sequence_privilege('anon', 'public.inventions_id_seq', 'usage'),
+  'anon no puede consumir la secuencia');
+select ok(not has_sequence_privilege('anon', 'public.inventions_id_seq', 'select'),
+  'anon no puede leer la secuencia');
+select ok(not has_sequence_privilege('anon', 'public.inventions_id_seq', 'update'),
+  'anon no puede alterar la secuencia');
+select ok(not has_sequence_privilege('authenticated', 'public.inventions_id_seq', 'usage'),
+  'authenticated no necesita consumir la secuencia identity');
+select ok(not has_sequence_privilege('authenticated', 'public.inventions_id_seq', 'select'),
+  'authenticated no puede observar el contador global');
+select ok(not has_sequence_privilege('authenticated', 'public.inventions_id_seq', 'update'),
+  'authenticated no puede alterar el contador global');
 select is(
   (select count(*)::integer from pg_policies where schemaname = 'public' and tablename = 'inventions'),
   4, 'hay una política separada por operación');
@@ -52,21 +88,39 @@ select set_config(
 select is((select count(*)::integer from public.inventions), 1,
   'el usuario uno solo lee su invento');
 select lives_ok(
-  $$ insert into public.inventions (title, description) values ('Riego automático', 'Prueba RLS') $$,
+  $$ insert into public.inventions (title, description, created_at, updated_at)
+     values (
+       'Riego automático', 'Prueba RLS',
+       '2000-01-01 00:00:00+00', '2099-01-01 00:00:00+00'
+     ) $$,
   'el usuario inserta una idea propia con user_id por defecto');
 select is(
   (select user_id from public.inventions where title = 'Riego automático'),
   '10000000-0000-0000-0000-000000000001'::uuid,
   'el user_id por defecto es el usuario autenticado');
+select ok(
+  (select created_at > '2000-01-01 00:00:00+00'::timestamptz
+   from public.inventions where title = 'Riego automático'),
+  'created_at de inserción lo controla la base');
+select ok(
+  (select updated_at < '2099-01-01 00:00:00+00'::timestamptz
+   from public.inventions where title = 'Riego automático'),
+  'updated_at de inserción lo controla la base');
 select throws_ok(
   $$ insert into public.inventions (user_id, title) values ('10000000-0000-0000-0000-000000000002', 'Idea ajena') $$,
   '42501', null, 'un usuario no inserta para otra persona');
 select lives_ok(
-  $$ update public.inventions set status = 'prototype' where title = 'Motor solar' $$,
+  $$ update public.inventions
+     set status = 'prototype', updated_at = '2000-01-01 00:00:00+00'
+     where title = 'Motor solar' $$,
   'un usuario actualiza su propio invento');
 select is(
   (select status from public.inventions where title = 'Motor solar'),
   'prototype', 'la actualización propia persiste');
+select ok(
+  (select updated_at > '2000-01-01 00:00:00+00'::timestamptz
+   from public.inventions where title = 'Motor solar'),
+  'updated_at lo controla la base y no el cliente');
 select throws_ok(
   $$ update public.inventions
      set user_id = '10000000-0000-0000-0000-000000000002'

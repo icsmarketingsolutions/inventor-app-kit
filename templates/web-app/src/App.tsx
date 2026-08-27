@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js';
 import project from './project.generated.json';
 import { makeDemoInvention, normalizeDraft, validateDraft } from './lib/inventions';
+import { ExclusiveOperationGuard, LatestRequestGuard } from './lib/operation-guard';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import { inventionStatuses, type Invention, type InventionDraft, type InventionStatus } from './types';
 
@@ -10,6 +11,14 @@ const statusLabels: Record<InventionStatus, string> = {
   prototype: 'Prototipo',
   complete: 'Terminado',
 };
+
+const dataErrorMessage = 'No pudimos completar la operación. Intentá de nuevo.';
+
+function authErrorMessage(action: 'sign-in' | 'sign-up') {
+  return action === 'sign-in'
+    ? 'No pudimos iniciar sesión. Revisá tus datos e intentá de nuevo.'
+    : 'No pudimos crear la cuenta. Revisá tus datos e intentá de nuevo.';
+}
 
 const initialDemo: Invention[] = [{
   id: 'welcome',
@@ -30,14 +39,19 @@ function AuthPanel() {
     if (!supabase) return;
     setBusy(true);
     setMessage('');
-    const credentials = { email: email.trim(), password };
-    const result = action === 'sign-in'
-      ? await supabase.auth.signInWithPassword(credentials)
-      : await supabase.auth.signUp(credentials);
-    setMessage(result.error ? result.error.message : action === 'sign-up'
-      ? 'Cuenta creada. Revisá tu correo si el proyecto exige confirmación.'
-      : 'Sesión iniciada.');
-    setBusy(false);
+    try {
+      const credentials = { email: email.trim(), password };
+      const result = action === 'sign-in'
+        ? await supabase.auth.signInWithPassword(credentials)
+        : await supabase.auth.signUp(credentials);
+      setMessage(result.error ? authErrorMessage(action) : action === 'sign-up'
+        ? 'Cuenta creada. Revisá tu correo si el proyecto exige confirmación.'
+        : 'Sesión iniciada.');
+    } catch {
+      setMessage(authErrorMessage(action));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -61,21 +75,32 @@ function App() {
   const [draft, setDraft] = useState<InventionDraft>({ title: '', description: '' });
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [mutating, setMutating] = useState(false);
   const activeUserId = useRef<string | null>(null);
-  const requestGeneration = useRef(0);
+  const requestGuard = useRef(new LatestRequestGuard());
+  const mutationGuard = useRef(new ExclusiveOperationGuard());
 
   const loadInventions = useCallback(async (userId: string) => {
     if (!supabase) return;
-    const generation = requestGeneration.current;
+    const generation = requestGuard.current.next();
     setLoading(true);
-    const { data, error } = await supabase
-      .from('inventions')
-      .select('id,title,description,status,created_at,updated_at')
-      .order('created_at', { ascending: false });
-    if (generation !== requestGeneration.current || activeUserId.current !== userId) return;
-    setMessage(error?.message ?? '');
-    if (data) setInventions(data as Invention[]);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('inventions')
+        .select('id,title,description,status,created_at,updated_at')
+        .order('created_at', { ascending: false });
+      if (!requestGuard.current.isCurrent(generation) || activeUserId.current !== userId) return;
+      setMessage(error ? dataErrorMessage : '');
+      if (data) setInventions(data as Invention[]);
+    } catch {
+      if (requestGuard.current.isCurrent(generation) && activeUserId.current === userId) {
+        setMessage(dataErrorMessage);
+      }
+    } finally {
+      if (requestGuard.current.isCurrent(generation) && activeUserId.current === userId) {
+        setLoading(false);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -87,7 +112,7 @@ function App() {
       const nextUserId = nextSession?.user.id ?? null;
       if (activeUserId.current !== nextUserId) {
         activeUserId.current = nextUserId;
-        requestGeneration.current += 1;
+        requestGuard.current.invalidate();
         setInventions([]);
         setMessage('');
       }
@@ -129,12 +154,21 @@ function App() {
       setMessage('Idea agregada en modo demostración.');
       return;
     }
-    const { error } = await supabase.from('inventions').insert(normalized);
-    if (error) setMessage(error.message);
-    else {
-      setDraft({ title: '', description: '' });
-      setMessage('Invento guardado.');
-      if (session) await loadInventions(session.user.id);
+    if (!mutationGuard.current.tryEnter()) return;
+    setMutating(true);
+    try {
+      const { error } = await supabase.from('inventions').insert(normalized);
+      if (error) setMessage(dataErrorMessage);
+      else {
+        setDraft({ title: '', description: '' });
+        setMessage('Invento guardado.');
+        if (session) await loadInventions(session.user.id);
+      }
+    } catch {
+      setMessage(dataErrorMessage);
+    } finally {
+      mutationGuard.current.leave();
+      setMutating(false);
     }
   }
 
@@ -143,12 +177,21 @@ function App() {
       setInventions((current) => current.map((item) => item.id === invention.id ? { ...item, status } : item));
       return;
     }
-    const { error } = await supabase
-      .from('inventions')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', invention.id);
-    if (error) setMessage(error.message);
-    else if (session) await loadInventions(session.user.id);
+    if (!mutationGuard.current.tryEnter()) return;
+    setMutating(true);
+    try {
+      const { error } = await supabase
+        .from('inventions')
+        .update({ status })
+        .eq('id', invention.id);
+      if (error) setMessage(dataErrorMessage);
+      else if (session) await loadInventions(session.user.id);
+    } catch {
+      setMessage(dataErrorMessage);
+    } finally {
+      mutationGuard.current.leave();
+      setMutating(false);
+    }
   }
 
   async function removeInvention(invention: Invention) {
@@ -157,9 +200,18 @@ function App() {
       setInventions((current) => current.filter((item) => item.id !== invention.id));
       return;
     }
-    const { error } = await supabase.from('inventions').delete().eq('id', invention.id);
-    if (error) setMessage(error.message);
-    else if (session) await loadInventions(session.user.id);
+    if (!mutationGuard.current.tryEnter()) return;
+    setMutating(true);
+    try {
+      const { error } = await supabase.from('inventions').delete().eq('id', invention.id);
+      if (error) setMessage(dataErrorMessage);
+      else if (session) await loadInventions(session.user.id);
+    } catch {
+      setMessage(dataErrorMessage);
+    } finally {
+      mutationGuard.current.leave();
+      setMutating(false);
+    }
   }
 
   const canUseApp = !isSupabaseConfigured || Boolean(session);
@@ -192,7 +244,7 @@ function App() {
             <form onSubmit={addInvention}>
               <label>Nombre<input value={draft.title} maxLength={120} onChange={(event) => setDraft({ ...draft, title: event.target.value })} placeholder="Ejemplo: riego solar" /></label>
               <label>Descripción<textarea value={draft.description} maxLength={2000} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="¿Qué resuelve y cuál es el siguiente experimento?" /></label>
-              <button type="submit">Guardar idea</button>
+              <button type="submit" disabled={mutating}>Guardar idea</button>
             </form>
             {message && <p className="message" role="status">{message}</p>}
           </section>
@@ -205,8 +257,8 @@ function App() {
                   <article className="invention" key={invention.id}>
                     <div><span className={`status status-${invention.status}`}>{statusLabels[invention.status]}</span><h3>{invention.title}</h3><p>{invention.description || 'Sin descripción todavía.'}</p></div>
                     <div className="card-actions">
-                      <label>Estado<select value={invention.status} onChange={(event) => changeStatus(invention, event.target.value as InventionStatus)}>{inventionStatuses.map((status) => <option value={status} key={status}>{statusLabels[status]}</option>)}</select></label>
-                      <button className="danger" type="button" onClick={() => removeInvention(invention)}>Eliminar</button>
+                      <label>Estado<select disabled={mutating} value={invention.status} onChange={(event) => changeStatus(invention, event.target.value as InventionStatus)}>{inventionStatuses.map((status) => <option value={status} key={status}>{statusLabels[status]}</option>)}</select></label>
+                      <button className="danger" type="button" disabled={mutating} onClick={() => removeInvention(invention)}>Eliminar</button>
                     </div>
                   </article>
                 ))}
@@ -216,7 +268,7 @@ function App() {
         </>
       )}
 
-      {session && <button className="sign-out" type="button" onClick={() => supabase?.auth.signOut()}>Cerrar sesión</button>}
+      {session && <button className="sign-out" type="button" disabled={mutating} onClick={() => supabase?.auth.signOut()}>Cerrar sesión</button>}
     </main>
   );
 }

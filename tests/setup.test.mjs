@@ -40,8 +40,34 @@ test('la guía fija Node 24, separa Codex de elevación y usa MCP por proyecto',
   const bootstrap = readFileSync(join(root, 'scripts', 'bootstrap-windows.ps1'), 'utf8');
   const computer = readFileSync(join(root, 'setup', 'COMPUTADORA_NUEVA.md'), 'utf8');
   const mcp = readFileSync(join(root, 'setup', 'MCP_Y_CUENTAS.md'), 'utf8');
-  assert.match(bootstrap, /Version = '24\.18\.0'/);
+  assert.match(bootstrap, /Version = '24\.19\.0'/);
+  assert.match(readFileSync(join(root, 'scripts', 'check-machine.ps1'), 'utf8'), /24\.18\.1/);
   assert.doesNotMatch(bootstrap, /npm.*install.*@openai\/codex/s);
   assert.match(computer, /@openai\/codex@0\.150\.1/);
   assert.match(mcp, /\.codex\/config\.toml/);
+});
+
+test('el primer prompt clona el repo público y exige la verificación local completa', () => {
+  const prompt = readFileSync(join(root, 'setup', 'PROMPT_COMPUTADORA_NUEVA.md'), 'utf8');
+  assert.match(prompt, /https:\/\/github\.com\/icsmarketingsolutions\/inventor-app-kit/);
+  assert.match(prompt, /npm run verify/);
+  assert.match(prompt, /read_only=true/);
+  assert.match(prompt, /360, 768 y 1440/);
+  assert.match(prompt, /nunca service_role/i);
+  assert.ok(prompt.indexOf('Microsoft.PowerShell') < prompt.indexOf('git remote -v'));
+  assert.match(prompt, /todavía no los busqués\s+en la raíz del kit/);
+  assert.doesNotMatch(prompt, /peg(?:á|a).*(?:token|contraseña|clave).*chat/i);
+});
+
+test('check-machine convierte herramientas no ejecutables en diagnóstico', {
+  skip: process.platform !== 'win32',
+}, () => {
+  const path = join(root, 'scripts', 'check-machine.ps1');
+  const result = spawnSync('pwsh', ['-NoProfile', '-File', path], {
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  assert.ok([0, 1].includes(result.status ?? -1), result.stderr);
+  assert.match(result.stdout, /Resultado:/);
+  assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, /Invoke-ExternalCapture:|Exception calling/);
 });

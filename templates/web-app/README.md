@@ -31,7 +31,7 @@ Abrí este repo como proyecto y pegá [PROMPT_INICIO.md](PROMPT_INICIO.md). Para
 cambio grande, usá Prompt Foundry:
 
 ```powershell
-node ./scripts/foundry.mjs --project . --mode plan --objective "Describí el cambio"
+node ./scripts/foundry.mjs --project . --mode plan --objective "Describí el cambio" --out .foundry-output/PROMPT_ACTUAL.md
 ```
 
 Nunca pegues secretos en un prompt ni conectes una IA a producción.
