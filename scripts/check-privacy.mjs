@@ -198,7 +198,8 @@ function prohibitedFileRule(filePath) {
   if (/^(?:.*\/)?\.vscode\/[^/]*\.local\.json$/i.test(normalized)) return 'file.local-config';
   if (/^(?:.*\/)?\.obsidian\/workspace[^/]*$/i.test(normalized)) return 'file.local-config';
   if (name === '.env' || name.startsWith('.env.')) {
-    if (/\.env(?:\.[^/]+)*\.(?:example|sample|template|dist)$/i.test(normalized)) {
+    const templateSuffixes = ['.example', '.sample', '.template', '.dist'];
+    if (templateSuffixes.some((suffix) => name.endsWith(suffix))) {
       return null;
     }
     return 'file.env';
