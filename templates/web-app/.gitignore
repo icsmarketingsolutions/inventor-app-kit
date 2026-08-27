@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .foundry-output/
+.desktop/
 .env
 .env.*
 !.env.example

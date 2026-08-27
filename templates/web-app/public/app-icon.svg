@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Taller de inventos</title>
+  <desc id="description">Una bombilla sobre un fondo azul</desc>
+  <rect width="512" height="512" rx="112" fill="#172554"/>
+  <path fill="#f8fafc" d="M256 92c-91 0-164 70-164 157 0 55 29 104 75 132 12 8 20 21 20 36v3h138v-3c0-15 8-29 21-37 45-28 74-76 74-131 0-87-73-157-164-157Zm-65 157c0-34 29-61 65-61 11 0 20 9 20 20s-9 20-20 20c-14 0-25 9-25 21 0 11-9 20-20 20s-20-9-20-20Z"/>
+  <path fill="#38bdf8" d="M187 337h138v45H187z"/>
+  <path fill="#f8fafc" d="M207 440h98c-5 29-25 44-49 44s-44-15-49-44Z"/>
+</svg>

@@ -54,6 +54,8 @@ test('el primer prompt clona el repo público y exige la verificación local com
   assert.match(prompt, /read_only=true/);
   assert.match(prompt, /360, 768 y 1440/);
   assert.match(prompt, /nunca service_role/i);
+  assert.match(prompt, /npm run desktop:install/);
+  assert.match(prompt, /acceso directo/i);
   assert.ok(prompt.indexOf('Microsoft.PowerShell') < prompt.indexOf('git remote -v'));
   assert.match(prompt, /todavía no los busqués\s+en la raíz del kit/);
   assert.doesNotMatch(prompt, /peg(?:á|a).*(?:token|contraseña|clave).*chat/i);

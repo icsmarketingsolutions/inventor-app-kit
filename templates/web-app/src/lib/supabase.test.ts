@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedSupabaseUrl } from './supabase';
+import { getSupabaseStorageKey, isAllowedSupabaseUrl } from './supabase';
 
 describe('isAllowedSupabaseUrl', () => {
   it('acepta HTTPS remoto y HTTP únicamente en loopback', () => {
@@ -15,5 +15,16 @@ describe('isAllowedSupabaseUrl', () => {
     expect(isAllowedSupabaseUrl(credentialUrl)).toBe(false);
     expect(isAllowedSupabaseUrl('javascript:alert(1)')).toBe(false);
     expect(isAllowedSupabaseUrl('no-es-url')).toBe(false);
+  });
+});
+
+describe('getSupabaseStorageKey', () => {
+  it('aísla sesiones de aplicaciones con slugs distintos', () => {
+    expect(getSupabaseStorageKey('taller-uno')).not.toBe(getSupabaseStorageKey('taller-dos'));
+    expect(getSupabaseStorageKey('taller-uno')).toBe('inventor-taller-uno-auth');
+  });
+
+  it('rechaza slugs que no pertenecen al generador', () => {
+    expect(() => getSupabaseStorageKey('../otra-app')).toThrow(/slug/i);
   });
 });

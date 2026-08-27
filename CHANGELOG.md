@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0 — 2026-08-27
+
+- Cada app generada incluye manifiesto PWA y abre en una ventana independiente de Chrome o Edge.
+- Instalador Windows crea accesos directos en Escritorio y menú Inicio sin requerir administrador.
+- El lanzador silencioso inicia Docker Desktop, Supabase local y Vite, evita duplicados y conserva las
+  credenciales publicables locales solo en memoria.
+- Comandos separados permiten consultar estado, detener los servicios sin borrar datos y desinstalar
+  únicamente los accesos directos.
+- El flujo de escritorio hereda el patrón probado de V.A.U.L.T. y deja logs locales ignorados por Git.
+- Los iconos PNG 192/512, el manifiesto y el service worker cumplen el contrato PWA y cachean assets
+  sin devolver HTML como JavaScript cuando no hay red.
+- Cada app aísla `project_id`, sesión Auth, caché y perfil Chromium; el launcher rechaza Docker remoto,
+  aplica migraciones locales pendientes y revierte recursos si un arranque falla.
+- Inicio y apagado comparten un mutex global; `desktop:stop` valida el PID, cierra la ventana y falla
+  explícitamente si algún servicio no pudo detenerse.
+
 ## 0.2.1 — 2026-08-27
 
 - Auditoría pública multiagente: privacidad, historial, cadena de suministro, frontend y Supabase.

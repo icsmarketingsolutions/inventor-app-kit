@@ -33,7 +33,10 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-$script:ExcludedTemplateDirectories = @('.git', '.codex', '.branches', '.temp', 'coverage', 'dist', 'node_modules')
+$script:ExcludedTemplateDirectories = @(
+    '.git', '.codex', '.branches', '.desktop', '.foundry-output', '.temp',
+    'coverage', 'dist', 'node_modules'
+)
 
 function Assert-TemplateValue {
     param(
@@ -157,6 +160,9 @@ foreach ($entry in @(
 if ($Slug -notmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') {
     throw "Slug invalido. Usa solamente minusculas, numeros y guiones, sin espacios ni rutas."
 }
+if ($Slug.Length -gt 50) {
+    throw 'Slug invalido: usa como maximo 50 caracteres.'
+}
 if ($Slug -match '^(con|prn|aux|nul|com[1-9]|lpt[1-9])$') {
     throw "Slug invalido: '$Slug' es un nombre reservado en Windows."
 }
@@ -271,9 +277,9 @@ try {
 
     foreach ($file in @(Get-ChildItem -LiteralPath $stageFull -File -Force -Recurse)) {
         $relativeFile = [System.IO.Path]::GetRelativePath($stageFull, $file.FullName).Replace("\", "/")
-        if ($relativeFile -eq "src/project.generated.json") {
-            # Los datos que consume TypeScript se serializan abajo; nunca se interpolan
-            # como texto dentro de JSON porque comillas y saltos de linea lo romperian.
+        if ($relativeFile -in @("src/project.generated.json", "public/manifest.webmanifest")) {
+            # Los datos JSON generados se serializan abajo; nunca se interpolan como texto
+            # porque comillas y otros caracteres validos del producto podrian romperlos.
             continue
         }
         if (-not (Test-IsTemplateTextFile -Path $file.FullName)) {
@@ -303,6 +309,57 @@ try {
     [System.IO.Directory]::CreateDirectory((Split-Path -Parent $projectDataPath)) | Out-Null
     $projectDataJson = ($projectData | ConvertTo-Json -Depth 3) + "`n"
     [System.IO.File]::WriteAllText($projectDataPath, $projectDataJson, $utf8NoBom)
+
+    $manifestData = [ordered]@{
+        id                          = "/apps/$Slug"
+        name                        = $Name
+        short_name                  = $Name
+        description                 = $Problem
+        lang                        = "es"
+        start_url                   = "/?source=installed-app"
+        scope                       = "/"
+        display                     = "standalone"
+        background_color            = "#f8fafc"
+        theme_color                 = "#172554"
+        prefer_related_applications = $false
+        icons                       = @(
+            [ordered]@{
+                src     = "/app-icon-192.png"
+                sizes   = "192x192"
+                type    = "image/png"
+                purpose = "any"
+            },
+            [ordered]@{
+                src     = "/app-icon-512.png"
+                sizes   = "512x512"
+                type    = "image/png"
+                purpose = "any maskable"
+            },
+            [ordered]@{
+                src     = "/app-icon.svg"
+                sizes   = "any"
+                type    = "image/svg+xml"
+                purpose = "any"
+            }
+        )
+    }
+    $manifestPath = Join-Path $stageFull "public/manifest.webmanifest"
+    [System.IO.Directory]::CreateDirectory((Split-Path -Parent $manifestPath)) | Out-Null
+    $manifestJson = ($manifestData | ConvertTo-Json -Depth 5) + "`n"
+    [System.IO.File]::WriteAllText($manifestPath, $manifestJson, $utf8NoBom)
+
+    $supabaseConfigPath = Join-Path $stageFull "supabase/config.toml"
+    $supabaseProjectSentinel = 'project_id = "inventor-app-template"'
+    $supabaseConfig = [System.IO.File]::ReadAllText($supabaseConfigPath)
+    if (-not $supabaseConfig.Contains($supabaseProjectSentinel, [System.StringComparison]::Ordinal)) {
+        throw 'El template Supabase no contiene el project_id seguro esperado.'
+    }
+    $supabaseConfig = $supabaseConfig.Replace(
+        $supabaseProjectSentinel,
+        "project_id = `"$Slug`"",
+        [System.StringComparison]::Ordinal
+    )
+    [System.IO.File]::WriteAllText($supabaseConfigPath, $supabaseConfig, $utf8NoBom)
 
     $manifest = [ordered]@{
         schemaVersion = 1
@@ -349,5 +406,6 @@ $quotedTarget = $targetFull.Replace("'", "''", [System.StringComparison]::Ordina
     "Siguiente:"
     "  Set-Location -LiteralPath '$quotedTarget'"
     "  npm ci"
-    "  npm run dev"
+    "  npm run desktop:install"
+    "  npm run desktop:start"
 )

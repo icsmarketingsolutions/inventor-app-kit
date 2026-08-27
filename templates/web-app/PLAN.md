@@ -8,8 +8,9 @@ Resolver: __INVENTOR_APP_PROBLEM__
 
 - [x] Interfaz inicial y modo demostración.
 - [x] Base responsive para móvil, tableta y escritorio.
+- [x] Manifiesto PWA y lanzador de escritorio para Windows.
 - [x] Supabase Auth, tabla privada, RLS y pruebas.
-- [ ] Verificar el flujo local completo en esta computadora.
+- [ ] Instalar el acceso directo y verificar el flujo local completo en esta computadora.
 - [ ] Confirmar en uso real que la prioridad `__INVENTOR_PRIMARY_USE__` coincide
   con el contexto principal de las personas usuarias.
 

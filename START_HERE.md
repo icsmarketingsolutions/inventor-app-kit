@@ -40,7 +40,8 @@ pwsh -NoProfile -File ./scripts/New-InventorApp.ps1 `
 ```
 
 `Slug` es el nombre técnico de la carpeta: minúsculas, números y guiones, sin
-espacios ni tildes. En `PrimaryUse` elegí `mobile`, `desktop` o `balanced` según
+espacios ni tildes y con un máximo de 50 caracteres. En `PrimaryUse` elegí
+`mobile`, `desktop` o `balanced` según
 dónde se usará más. Esto cambia qué experiencia se prioriza, pero la app siempre
 debe seguir funcionando en móvil, tableta y escritorio.
 
@@ -56,11 +57,27 @@ El generador muestra la ruta exacta al terminar. Entrá en ella:
 ```powershell
 Set-Location 'C:\Proyectos\mis-inventos'
 npm ci
-npm run dev
+npm run desktop:install
+npm run desktop:start
 ```
 
-Abrí la URL que muestra Vite, normalmente `http://localhost:5173`. Para detener
-el servidor, volvé a PowerShell y presioná `Ctrl+C`.
+En Windows quedarán accesos directos en el Escritorio y el menú Inicio. Al
+abrirlos, la app espera a Docker, inicia el Supabase local y Vite, y aparece en
+una ventana independiente de Chrome o Edge. La primera apertura puede tardar
+varios minutos; las siguientes reutilizan los servicios y la ventana existentes.
+
+Para conocer, detener o desinstalar únicamente los accesos directos:
+
+```powershell
+npm run desktop:status
+npm run desktop:stop
+npm run desktop:uninstall
+```
+
+`desktop:stop` conserva los datos locales y deja Docker Desktop disponible para
+otras apps. La ruta manual `npm run dev` sigue disponible, pero no inicia
+Supabase. Leé [DESKTOP_WINDOWS.md](templates/web-app/DESKTOP_WINDOWS.md) para el
+comportamiento completo.
 
 ## 5. Dale contexto a la IA
 
@@ -82,7 +99,7 @@ node ./scripts/foundry.mjs `
 
 ```powershell
 Set-Location 'C:\Proyectos\mis-inventos'
-npm run dev
+npm run desktop:start
 ```
 
 Leé `HANDOFF.md` para recordar qué quedó listo y qué sigue.

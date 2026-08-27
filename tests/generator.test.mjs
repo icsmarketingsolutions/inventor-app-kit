@@ -43,7 +43,7 @@ test('genera una app completa, personalizada y portable', (context) => {
   const result = generate(outputRoot);
   const app = join(outputRoot, 'taller-de-prueba');
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(JSON.parse(readFileSync(join(app, '.inventor-kit.json'), 'utf8')).kitVersion, '0.2.1');
+  assert.equal(JSON.parse(readFileSync(join(app, '.inventor-kit.json'), 'utf8')).kitVersion, '0.3.0');
   const projectData = JSON.parse(readFileSync(join(app, 'src', 'project.generated.json'), 'utf8'));
   assert.equal(projectData.firstAction, 'Registrar una idea');
   assert.equal(projectData.primaryUse, 'mobile');
@@ -63,6 +63,19 @@ test('genera una app completa, personalizada y portable', (context) => {
     'scripts/foundry.mjs',
     'scripts/check-privacy.mjs',
     'scripts/redact-supabase-output.mjs',
+    'scripts/desktop/desktop-common.ps1',
+    'scripts/desktop/install-app.ps1',
+    'scripts/desktop/start-app.ps1',
+    'scripts/desktop/start-app.vbs',
+    'scripts/desktop/status-app.ps1',
+    'scripts/desktop/stop-app.ps1',
+    'scripts/desktop/uninstall-app.ps1',
+    'DESKTOP_WINDOWS.md',
+    'public/app-icon.svg',
+    'public/app-icon-192.png',
+    'public/app-icon-512.png',
+    'public/manifest.webmanifest',
+    'public/service-worker.js',
     'supabase/migrations/20260827160330_initial_inventions.sql',
     'supabase/migrations/20260827190000_harden_inventions.sql',
     'supabase/tests/inventions_rls.test.sql',
@@ -77,6 +90,15 @@ test('genera una app completa, personalizada y portable', (context) => {
   }
   assert.equal(existsSync(join(app, 'node_modules')), false);
   assert.equal(existsSync(join(app, 'dist')), false);
+  const manifest = JSON.parse(readFileSync(join(app, 'public', 'manifest.webmanifest'), 'utf8'));
+  assert.equal(manifest.id, '/apps/taller-de-prueba');
+  assert.equal(manifest.name, 'Taller de prueba');
+  assert.equal(manifest.display, 'standalone');
+  assert.ok(manifest.icons.some((icon) => icon.sizes === '192x192' && icon.type === 'image/png'));
+  assert.ok(manifest.icons.some((icon) => icon.sizes === '512x512' && icon.type === 'image/png'));
+  const supabaseConfig = readFileSync(join(app, 'supabase', 'config.toml'), 'utf8');
+  assert.match(supabaseConfig, /^project_id = "taller-de-prueba"$/m);
+  assert.doesNotMatch(supabaseConfig, /^project_id = "web-app"$/m);
 });
 
 test('rechaza sobrescritura y conserva el contenido existente', (context) => {
@@ -97,6 +119,15 @@ test('rechaza un slug que intenta escapar de la carpeta elegida', (context) => {
   const result = generate(outputRoot, '../escape');
   assert.notEqual(result.status, 0);
   assert.equal(existsSync(resolve(outputRoot, '..', 'escape')), false);
+});
+
+test('rechaza slugs demasiado largos para Windows y Supabase local', (context) => {
+  const outputRoot = mkdtempSync(join(tmpdir(), 'inventor-generator-'));
+  context.after(() => rmSync(outputRoot, { recursive: true, force: true }));
+  const longSlug = `taller-${'a'.repeat(50)}`;
+  const result = generate(outputRoot, longSlug);
+  assert.notEqual(result.status, 0);
+  assert.equal(existsSync(join(outputRoot, longSlug)), false);
 });
 
 test('rechaza texto multilínea o con sintaxis de instrucciones persistentes', (context) => {

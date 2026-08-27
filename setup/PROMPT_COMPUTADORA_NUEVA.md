@@ -99,7 +99,10 @@ FASE 7 — CREAR MI PRIMERA APP
    escritorio, con teclado y controles táctiles.
 4. Dentro de la app generada corré npm ci, npm run lint, npm test, npm run build y npm audit.
    Requerido: cero warnings, cero fallos y cero vulnerabilidades.
-5. Leé CLAUDE.md, AGENTS.md, .agents/skills/build-an-app/SKILL.md, memory/INDEX.md y
+5. En Windows, ejecutá `npm run desktop:install` y verificá que existan los accesos directos exactos
+   en el Escritorio y el menú Inicio. No abras todavía el acceso directo: primero validaremos la
+   cadena de base de datos desde cero.
+6. Leé CLAUDE.md, AGENTS.md, .agents/skills/build-an-app/SKILL.md, memory/INDEX.md y
    docs/ARBOL_CONOCIMIENTO.md. Mostrame cómo usar Prompt Foundry, las funciones, la memoria y el
    ciclo plan -> implementar -> probar -> documentar -> commit.
 
@@ -118,14 +121,23 @@ FASE 8 — SUPABASE LOCAL, DESDE CERO
    volúmenes de ese stack.
 6. Si Docker o Supabase falla, frená. Nunca uses un Supabase remoto como sustituto.
 
-FASE 9 — PRUEBA REAL EN NAVEGADOR
-1. Arrancá primero la app sin variables de Supabase y probá el modo demo. Detenela después.
-2. Reiniciala con las variables publicables del Supabase local.
-3. En un navegador real probá: crear cuenta local, iniciar sesión, crear/editar/eliminar un
+FASE 9 — PRUEBA REAL COMO APP DE ESCRITORIO
+1. Arrancá primero la app con `npm run dev`, sin variables de Supabase, y probá el modo demo en un
+   navegador real. Detenela después.
+2. Con el stack todavía limpio, abrí el acceso directo del Escritorio como lo haría una persona.
+   Verificá en vivo que el lanzador inicia o espera Docker Desktop, levanta Supabase local y Vite,
+   y abre Chrome o Edge en una ventana independiente sin una consola negra auxiliar.
+3. Ejecutá `npm run desktop:status`: Docker, Supabase y Vite deben aparecer como `listo`, sin
+   imprimir URLs con credenciales ni llaves. Abrí el mismo acceso directo una segunda vez y
+   comprobá que enfoca la ventana existente, sin duplicar Vite ni la ventana.
+4. En la app de escritorio probá: crear cuenta local, iniciar sesión, crear/editar/eliminar un
    invento, cerrar sesión y aislamiento con una segunda cuenta.
-4. Verificá a 360, 768 y 1440 px; recorré foco con teclado y comprobá que no haya errores visibles ni
+5. Verificá a 360, 768 y 1440 px; recorré foco con teclado y comprobá que no haya errores visibles ni
    en consola.
-5. Cerrá el servidor y el stack local al terminar.
+6. Confirmá que el manifiesto, icono y service worker responden, y que Chrome o Edge reconoce la app
+   como instalable en `localhost`. El acceso directo debe quedar instalado para usarlo mañana.
+7. Cerrá la ventana y ejecutá `npm run desktop:stop`. Confirmá que Vite y Supabase se detienen, los
+   datos locales se conservan y Docker Desktop sigue abierto para otras aplicaciones.
 
 CIERRE
 Entregame una tabla breve con cada fase: verificada en vivo, pendiente o bloqueada. Incluí versiones

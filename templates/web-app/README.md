@@ -2,15 +2,21 @@
 
 __INVENTOR_APP_PROBLEM__
 
-## Empezar sin base de datos
+## Instalar y abrir en Windows
 
 ```powershell
 npm ci
-npm run dev
+npm run desktop:install
+npm run desktop:start
 ```
 
-La interfaz abre en modo demostración y permite probar el primer flujo. Para
-guardar cuentas y datos con Supabase, seguí [SUPABASE_LOCAL.md](SUPABASE_LOCAL.md).
+El acceso directo espera a Docker, inicia el Supabase local y Vite, y abre una
+ventana independiente. Leé [DESKTOP_WINDOWS.md](DESKTOP_WINDOWS.md) para conocer
+el estado, detener servicios, desinstalar accesos directos o instalarla como PWA.
+
+Para una prueba rápida sin base de datos, `npm run dev` mantiene disponible el
+modo demostración. Para validar Supabase manualmente, seguí
+[SUPABASE_LOCAL.md](SUPABASE_LOCAL.md).
 
 La fundación usa Vite + React. La experiencia inicial prioriza
 __INVENTOR_PRIMARY_USE_LABEL__, pero debe mantenerse responsive y accesible en
@@ -20,6 +26,11 @@ móvil, tableta y escritorio.
 
 ```powershell
 npm run dev
+npm run desktop:install
+npm run desktop:start
+npm run desktop:status
+npm run desktop:stop
+npm run desktop:uninstall
 npm run lint
 npm test
 npm run build

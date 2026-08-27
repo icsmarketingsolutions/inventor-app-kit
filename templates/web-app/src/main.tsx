@@ -1,7 +1,16 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import project from './project.generated.json';
 import './styles.css';
+
+document.title = `${project.name} · ${project.slug}`;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/service-worker.js').catch(() => undefined);
+  });
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

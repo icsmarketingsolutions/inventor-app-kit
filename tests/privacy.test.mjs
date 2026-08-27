@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -192,6 +192,22 @@ test('decodifica UTF-16 y bloquea binarios desconocidos', () => {
     const rules = findingRules(scanRepository(root));
     assert.ok(rules.has('secret.known-token'));
     assert.ok(rules.has('file.unscannable-binary'));
+  });
+});
+
+test('permite únicamente los iconos PNG deterministas del kit', () => {
+  withTempDirectory((root) => {
+    const approvedIcon = readFileSync(join(
+      import.meta.dirname,
+      '..',
+      'templates',
+      'web-app',
+      'public',
+      'app-icon-192.png',
+    ));
+    writeFileSync(join(root, 'approved-icon.png'), approvedIcon);
+    const result = scanRepository(root);
+    assert.equal(result.findings.some((finding) => finding.rule === 'file.unscannable-binary'), false);
   });
 });
 

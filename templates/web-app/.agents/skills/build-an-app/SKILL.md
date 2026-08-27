@@ -71,3 +71,14 @@ escanea intencionalmente el directorio de trabajo, no la carpeta donde vive el
 script: invocarlo por ruta absoluta desde una carpeta padre auditaría el lugar
 equivocado. Para revisar un clon externo, entrá primero al clon y recién entonces
 ejecutá el gate.
+
+Si cambia el manifiesto, el service worker o `scripts/desktop/`, verificá además
+en Windows: `desktop:install`, apertura desde el acceso directo,
+`desktop:status`, segunda apertura sin duplicar Vite ni la ventana,
+`desktop:stop` y `desktop:uninstall`. La ventana debe abrir sin consola auxiliar
+y los logs no pueden contener URLs con credenciales, JWT ni llaves de Supabase.
+El apagado normal conserva la base local y nunca detiene Docker, porque puede
+estar sirviendo otras aplicaciones.
+El perfil Chromium vive en `.desktop/browser-profile`; mantené esa carpeta
+ignorada tanto por Git como por `server.watch` de Vite para evitar archivos
+bloqueados de cookies durante el desarrollo.

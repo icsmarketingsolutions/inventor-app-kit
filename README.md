@@ -31,6 +31,7 @@ El generador produce un repo independiente con:
 - migración reproducible, RLS y pruebas de base de datos;
 - `CLAUDE.md`, `AGENTS.md`, plan, árbol y skill;
 - memoria semilla versionada que debe mantenerse sanitizada;
+- manifiesto PWA y accesos directos de Windows que levantan los servicios locales;
 - lint, pruebas, build y GitHub Actions.
 
 La primera ejecución inicializa Git local, pero no toca GitHub, Supabase remoto
@@ -75,14 +76,15 @@ node ./scripts/foundry.mjs `
 - Supabase remoto y producción nunca se modifican sin aprobación explícita.
 - Secretos solo en `.env`; jamás en Git ni en prompts.
 
-## Alcance de `v0.2.1`
+## Alcance de `v0.3.0`
 
 Incluye onboarding y diagnóstico verificados para Windows. El generador usa
 PowerShell 7 y Foundry usa Node, por lo que una persona avanzada puede ejecutarlos
 en macOS/Linux después de preparar equivalentes manuales; esa ruta todavía no
-tiene onboarding ni smoke oficial en `v0.2.1`. El starter usa Supabase local con Docker antes de conectar
-un proyecto remoto. PWA, pagos, correo, observabilidad y automatizaciones se
-agregan cuando el primer flujo ya está validado.
+tiene onboarding ni smoke oficial en `v0.3.0`. El starter usa Supabase local con Docker antes de conectar
+un proyecto remoto. En Windows también puede instalar accesos directos y abrirse como PWA en una ventana
+independiente; pagos, correo, observabilidad y automatizaciones se agregan cuando el primer flujo ya está
+validado.
 
 ## Licencia
 

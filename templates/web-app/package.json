@@ -12,7 +12,12 @@
     "lint": "oxlint . --deny-warnings",
     "test": "vitest run",
     "privacy": "node ./scripts/check-privacy.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "desktop:install": "pwsh -NoProfile -File ./scripts/desktop/install-app.ps1",
+    "desktop:start": "pwsh -NoProfile -File ./scripts/desktop/start-app.ps1",
+    "desktop:status": "pwsh -NoProfile -File ./scripts/desktop/status-app.ps1",
+    "desktop:stop": "pwsh -NoProfile -File ./scripts/desktop/stop-app.ps1",
+    "desktop:uninstall": "pwsh -NoProfile -File ./scripts/desktop/uninstall-app.ps1"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",

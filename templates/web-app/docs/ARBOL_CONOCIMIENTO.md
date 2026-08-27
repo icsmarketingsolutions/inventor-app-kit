@@ -13,6 +13,7 @@
 - `src/App.tsx`: autenticación y flujo principal; cada cambio de identidad invalida
   respuestas pendientes y vacía los datos antes de cargar la nueva sesión.
 - `src/lib/supabase.ts`: cliente publicable; nunca service role.
+  Su `storageKey` deriva del slug para no compartir sesiones entre apps locales.
 - `src/lib/inventions.ts`: validación y normalización puras.
 - `src/lib/operation-guard.ts`: descarta respuestas obsoletas y evita mutaciones simultáneas.
 - `src/project.generated.json`: contexto visible generado desde las respuestas iniciales.
@@ -31,6 +32,16 @@
 
 - Desarrollo: Vite + React.
 - Backend local: Supabase CLI sobre Docker.
+- `supabase/config.toml`: `project_id` se genera desde el slug para aislar
+  contenedores, volúmenes y apagado entre aplicaciones locales distintas.
+- `public/manifest.webmanifest`, `public/app-icon.svg` y `public/service-worker.js`:
+  identidad PWA, ventana standalone y shell local instalable.
+- `scripts/desktop/`: instalador y lanzador Windows. El acceso directo usa un
+  puente VBS silencioso, espera Docker, levanta Supabase y Vite, valida que el
+  puerto pertenezca a esta app y abre o enfoca una única ventana Chromium. El
+  perfil del navegador vive bajo `.desktop/` y queda aislado por repo.
+- `.desktop/`: estado y logs locales ignorados por Git; no recibe llaves ni
+  salida cruda de Supabase. `desktop:stop` conserva los datos y deja Docker abierto.
 - Analytics y Vector locales están desactivados porque esta app no los consume; así el stack mínimo
   no arranca servicios innecesarios.
 - Calidad: oxlint, Vitest, TypeScript y build.

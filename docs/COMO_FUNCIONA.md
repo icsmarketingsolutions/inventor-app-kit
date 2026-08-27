@@ -90,3 +90,15 @@ npx supabase stop --no-backup
 Una salida verde significa que Docker arrancó, la migración aplicó y pgTAP pasó.
 Hay que leer la salida completa: un proceso con exit code cero no sustituye esa
 comprobación.
+
+## Aplicación de escritorio en Windows
+
+Cada app incluye manifiesto PWA y un instalador local. El acceso directo no
+empaqueta secretos ni duplica la aplicación: llama al código del repo, inicia
+Docker Desktop si hace falta, levanta su Supabase local y Vite, espera a que
+respondan y abre una ventana `--app` de Chrome o Edge. Una segunda apertura
+enfoca la ventana existente. El estado y los logs quedan en `.desktop/`, fuera
+de Git, y el apagado conserva los datos locales.
+
+En un dominio HTTPS o en `localhost`, el manifiesto y el service worker también
+permiten usar la instalación PWA nativa del navegador.

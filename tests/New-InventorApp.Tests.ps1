@@ -44,7 +44,7 @@ function New-TestKit {
     [System.IO.Directory]::CreateDirectory($foundry) | Out-Null
 
     Copy-Item -LiteralPath $script:GeneratorSource -Destination (Join-Path $scripts "New-InventorApp.ps1")
-    Write-TestText -Path (Join-Path $Root "VERSION") -Content "0.2.0`n"
+    Write-TestText -Path (Join-Path $Root "VERSION") -Content "0.3.0`n"
     Write-TestText -Path (Join-Path $template "README.md") -Content @'
 # __INVENTOR_APP_NAME__
 Slug: __INVENTOR_APP_SLUG__
@@ -60,6 +60,7 @@ Kit: __INVENTOR_KIT_VERSION__
     Write-TestText -Path (Join-Path $skill "SKILL.md") -Content "# __INVENTOR_APP_NAME__`n"
     Write-TestText -Path (Join-Path $template "scripts/helper.ps1") -Content "# helper`n"
     Write-TestText -Path (Join-Path $template "src/project.generated.json") -Content '{"placeholder":true}'
+    Write-TestText -Path (Join-Path $template "supabase/config.toml") -Content 'project_id = "inventor-app-template"'
     Write-TestText -Path (Join-Path $foundry "base.md") -Content "Proyecto: __INVENTOR_APP_NAME__`n"
     Write-TestText -Path (Join-Path $scripts "foundry.mjs") -Content "// __INVENTOR_APP_SLUG__`n"
     Write-TestText -Path (Join-Path $scripts "check-privacy.mjs") -Content "// privacy gate`n"
@@ -143,16 +144,19 @@ function Get-NormalizedTree {
 
         $manifest = Get-Content -Raw -LiteralPath (Join-Path $target ".inventor-kit.json") | ConvertFrom-Json
         $manifest.schemaVersion | Should -Be 1
-        $manifest.kitVersion | Should -Be "0.2.0"
+        $manifest.kitVersion | Should -Be "0.3.0"
         $manifest.template | Should -Be "web-app"
 
         $projectData = Get-Content -Raw -LiteralPath (Join-Path $target "src/project.generated.json") | ConvertFrom-Json
+        $webManifest = Get-Content -Raw -LiteralPath (Join-Path $target "public/manifest.webmanifest") | ConvertFrom-Json
         $projectData.schemaVersion | Should -Be 2
         $projectData.name | Should -Be "Mis inventos"
         $projectData.problem | Should -Be "Ordenar ideas"
         $projectData.audience | Should -Be "Mi familia"
         $projectData.firstAction | Should -Be "Registrar un invento"
         $projectData.primaryUse | Should -Be "balanced"
+        (Get-Content -Raw -LiteralPath (Join-Path $target "supabase/config.toml")).Trim() |
+            Should -Be 'project_id = "mis-inventos"'
 
         $resolvedTarget = (Resolve-Path -LiteralPath $target).Path
         $quotedTarget = $resolvedTarget.Replace("'", "''")
@@ -161,11 +165,12 @@ function Get-NormalizedTree {
             "Nombre: Mis inventos"
             "Experiencia principal: móvil y escritorio por igual"
             "Ruta: $resolvedTarget"
-            "Kit: v0.2.0"
+            "Kit: v0.3.0"
             "Siguiente:"
             "  Set-Location -LiteralPath '$quotedTarget'"
             "  npm ci"
-            "  npm run dev"
+            "  npm run desktop:install"
+            "  npm run desktop:start"
         ) -join "`n"
         ($result.Output -join "`n") | Should -Be $expected
     }
@@ -177,6 +182,7 @@ function Get-NormalizedTree {
         $target = Join-Path $outputRoot "mis-inventos"
         $readme = Get-Content -Raw -LiteralPath (Join-Path $target "README.md")
         $projectData = Get-Content -Raw -LiteralPath (Join-Path $target "src/project.generated.json") | ConvertFrom-Json
+        $webManifest = Get-Content -Raw -LiteralPath (Join-Path $target "public/manifest.webmanifest") | ConvertFrom-Json
 
         $result.ExitCode | Should -Be 0
         $readme.Contains("# $name") | Should -Be $true
@@ -184,6 +190,8 @@ function Get-NormalizedTree {
         $readme.Contains("__INVENTOR_") | Should -Be $false
         $projectData.name | Should -Be $name
         $projectData.problem | Should -Be $problem
+        $webManifest.name | Should -Be $name
+        $webManifest.description | Should -Be $problem
     }
 
     It "rechaza saltos de linea y sintaxis persistente en datos del producto" {
@@ -235,6 +243,8 @@ function Get-NormalizedTree {
         Write-TestText -Path (Join-Path $kitRoot "templates/web-app/.env.local") -Content "SECRET_VALUE=privado"
         Write-TestText -Path (Join-Path $kitRoot "templates/web-app/.mcp.json") -Content '{"token":"privado"}'
         Write-TestText -Path (Join-Path $kitRoot "templates/web-app/.codex/config.toml") -Content 'token = "privado"'
+        Write-TestText -Path (Join-Path $kitRoot "templates/web-app/.desktop/desktop.log") -Content 'ruta local privada'
+        Write-TestText -Path (Join-Path $kitRoot "templates/web-app/.foundry-output/PROMPT_ACTUAL.md") -Content 'contexto privado'
         Write-TestText -Path (Join-Path $kitRoot "templates/web-app/.vscode/settings.local.json") -Content '{"privado":true}'
         Write-TestText -Path (Join-Path $kitRoot "templates/web-app/.obsidian/workspace.json") -Content '{"privado":true}'
 
@@ -247,6 +257,8 @@ function Get-NormalizedTree {
         (Test-Path -LiteralPath (Join-Path $target ".env.local")) | Should -Be $false
         (Test-Path -LiteralPath (Join-Path $target ".mcp.json")) | Should -Be $false
         (Test-Path -LiteralPath (Join-Path $target ".codex")) | Should -Be $false
+        (Test-Path -LiteralPath (Join-Path $target ".desktop")) | Should -Be $false
+        (Test-Path -LiteralPath (Join-Path $target ".foundry-output")) | Should -Be $false
         (Test-Path -LiteralPath (Join-Path $target ".vscode/settings.local.json")) | Should -Be $false
         (Test-Path -LiteralPath (Join-Path $target ".obsidian/workspace.json")) | Should -Be $false
     }
@@ -267,6 +279,13 @@ function Get-NormalizedTree {
         ($result.ExitCode -ne 0) | Should -Be $true
         (Test-Path -LiteralPath (Join-Path $caseRoot "escape")) | Should -Be $false
         @(Get-ChildItem -LiteralPath $outputRoot -Force -Filter ".inventor-kit-tmp-*").Count | Should -Be 0
+
+        $longRoot = Join-Path $caseRoot "long-output"
+        [System.IO.Directory]::CreateDirectory($longRoot) | Out-Null
+        $longSlug = "taller-" + ("a" * 50)
+        $long = Invoke-TestGenerator -KitRoot $kitRoot -OutputRoot $longRoot -Slug $longSlug
+        ($long.ExitCode -ne 0) | Should -Be $true
+        (Test-Path -LiteralPath (Join-Path $longRoot $longSlug)) | Should -Be $false
     }
 
     It "produce el arbol golden normalizado en Windows y Unix" {

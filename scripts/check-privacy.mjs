@@ -4,8 +4,13 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 
 const MAX_GIT_OUTPUT = 128 * 1024 * 1024;
+const ALLOWED_BINARY_SHA256 = new Set([
+  'f416c26d520756280cf9a9129e8f885ff88dd8040a3b511f75f6dd57352245b8',
+  '39b59a4891f4c9ae507bff7263bde718c542456ba358442c1a6906a0618487f4',
+]);
 const FALLBACK_IGNORED_DIRS = new Set([
   '.git',
   '.venv',
@@ -389,6 +394,8 @@ function scanBuffer(buffer, location, state) {
     scanText(text, location, state);
     return;
   }
+  const digest = createHash('sha256').update(buffer).digest('hex');
+  if (ALLOWED_BINARY_SHA256.has(digest)) return;
   addFinding(state, { ...location, rule: 'file.unscannable-binary' });
 }
 
