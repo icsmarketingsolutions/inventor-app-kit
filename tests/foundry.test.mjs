@@ -23,7 +23,9 @@ function makeProject({ migrations = false } = {}) {
 
 test('lista todos los modos soportados', () => {
   const output = execFileSync(process.execPath, [script, '--list-modes'], { encoding: 'utf8' });
-  assert.deepEqual(output.trim().split('\n'), ['plan', 'build', 'fix', 'review', 'audit', 'document']);
+  assert.deepEqual(output.trim().split('\n'), [
+    'plan', 'build', 'fix', 'review', 'audit', 'document', 'improve',
+  ]);
 });
 
 test('genera un prompt determinista y apunta a la memoria', (context) => {

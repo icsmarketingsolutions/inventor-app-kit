@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 — 2026-08-29
+
+- INVENTOR O.S. Command Center pasa a ser el producto principal, local y sin Supabase obligatorio.
+- HUD React/Vite con paridad visual de V.A.U.L.T., grafo Markdown interactivo, búsqueda, capturas y
+  directivas compartibles con Obsidian.
+- Prompt Foundry visual genera contratos para Codex o Claude en siete modos y nunca expone rutas
+  absolutas en el texto copiado.
+- System Vitals inspecciona repos registrados; Ollama es opcional y Agent Ops exige confirmación,
+  proyecto registrado y ejecución sin shell.
+- API Node restringida a loopback, límites de entrada, contención de rutas y memoria fuera del repo.
+- Acceso directo Windows inicia la API y el HUD de escritorio sin Docker ni consola auxiliar.
+- El generador Vite + React + Supabase se conserva como herramienta secundaria para crear productos.
+
 ## 0.3.0 — 2026-08-27
 
 - Cada app generada incluye manifiesto PWA y abre en una ventana independiente de Chrome o Edge.

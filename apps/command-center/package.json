@@ -1,0 +1,39 @@
+{
+  "name": "inventor-os-command-center",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "server": "node server/index.mjs",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint . --deny-warnings",
+    "test": "npm run test:ui && npm run test:server",
+    "test:ui": "vitest run",
+    "test:server": "node --test server/tests/*.test.mjs",
+    "verify": "npm run lint && npm test && npm run build",
+    "desktop:install": "pwsh -NoProfile -File ./scripts/desktop/install-app.ps1",
+    "desktop:start": "pwsh -NoProfile -File ./scripts/desktop/start-app.ps1",
+    "desktop:status": "pwsh -NoProfile -File ./scripts/desktop/status-app.ps1",
+    "desktop:stop": "pwsh -NoProfile -File ./scripts/desktop/stop-app.ps1",
+    "desktop:uninstall": "pwsh -NoProfile -File ./scripts/desktop/uninstall-app.ps1"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "@vitejs/plugin-react": "6.1.0",
+    "oxlint": "1.80.0",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "4.1.11"
+  }
+}

@@ -51,13 +51,15 @@ test('el primer prompt clona el repo público y exige la verificación local com
   const prompt = readFileSync(join(root, 'setup', 'PROMPT_COMPUTADORA_NUEVA.md'), 'utf8');
   assert.match(prompt, /https:\/\/github\.com\/icsmarketingsolutions\/inventor-app-kit/);
   assert.match(prompt, /npm run verify/);
+  assert.match(prompt, /npm run os:verify/);
+  assert.match(prompt, /npm run os:install/);
   assert.match(prompt, /read_only=true/);
   assert.match(prompt, /360, 768 y 1440/);
-  assert.match(prompt, /nunca service_role/i);
-  assert.match(prompt, /npm run desktop:install/);
+  assert.match(prompt, /sin Supabase ni Docker/);
+  assert.match(prompt, /Supabase.*solo si el producto necesita/s);
   assert.match(prompt, /acceso directo/i);
-  assert.ok(prompt.indexOf('Microsoft.PowerShell') < prompt.indexOf('git remote -v'));
-  assert.match(prompt, /todavía no los busqués\s+en la raíz del kit/);
+  assert.ok(prompt.indexOf('Microsoft.PowerShell') < prompt.indexOf('CLON SEGURO'));
+  assert.match(prompt, /No hagas deploy, compras, DNS, repos remotos ni proyectos Supabase/);
   assert.doesNotMatch(prompt, /peg(?:á|a).*(?:token|contraseña|clave).*chat/i);
 });
 

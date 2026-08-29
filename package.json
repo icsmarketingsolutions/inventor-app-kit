@@ -1,6 +1,6 @@
 {
   "name": "inventor-app-kit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,6 +11,13 @@
     "test": "node --test tests/*.test.mjs",
     "test:powershell": "pwsh -NoProfile -File ./scripts/test-powershell.ps1",
     "privacy": "node scripts/check-privacy.mjs",
-    "verify": "npm test && npm run test:powershell && npm run privacy"
+    "verify": "npm test && npm run test:powershell && npm run privacy",
+    "os:dev": "npm --prefix apps/command-center run dev",
+    "os:build": "npm --prefix apps/command-center run build",
+    "os:verify": "npm --prefix apps/command-center run verify",
+    "os:install": "npm --prefix apps/command-center run desktop:install",
+    "os:start": "npm --prefix apps/command-center run desktop:start",
+    "os:status": "npm --prefix apps/command-center run desktop:status",
+    "os:stop": "npm --prefix apps/command-center run desktop:stop"
   }
 }

@@ -1,90 +1,80 @@
 # Inventor App Kit
 
-Un sistema portable para convertir una idea en una aplicación sin empezar de
-cero cada vez. El kit reúne cuatro piezas:
+Un sistema local y portable para pensar, organizar memoria y construir aplicaciones con agentes de IA.
+El producto principal es **INVENTOR O.S. Command Center**: un centro de mando inspirado en V.A.U.L.T.
+que funciona en la computadora sin Supabase, Docker ni una cuenta en la nube.
 
-1. **Prompt Foundry:** arma instrucciones claras y verificables para Codex o
-   Claude a partir del proyecto real.
-2. **Memoria viva:** decisiones, conocimiento, directivas y reportes en Markdown.
-3. **Método de trabajo:** planificar, construir, verificar, documentar y cerrar.
-4. **Fundación técnica:** Vite, React, TypeScript, Supabase, RLS, pruebas y CI.
+## Qué incluye
 
-No contiene cuentas, credenciales, proyectos ni datos de ninguna persona. Cada
-usuario crea su propia memoria y sus propios proyectos.
+1. **Command Center:** proyectos Git, estado del sistema, directivas y actividad en una sola ventana.
+2. **Memoria Markdown:** notas, capturas y `[[wikilinks]]` sobre los mismos archivos que abre Obsidian.
+3. **Memory Graph:** grafo interactivo de relaciones, con mouse y teclado.
+4. **Prompt Foundry:** contratos verificables para Codex o Claude en siete modos.
+5. **IA local opcional:** consola y refinador con Ollama; el resto sigue funcionando si no está instalado.
+6. **Agent Ops:** lanzamiento explícito y seguro de agentes dentro de proyectos registrados.
+7. **Generador de apps:** starter secundario Vite + React + TypeScript, con Supabase solo cuando la app lo
+   necesita.
 
-## Por dónde empezar
+El repositorio público no contiene cuentas, credenciales, proyectos personales ni memoria privada. La
+memoria real se crea fuera de Git al abrir el Command Center por primera vez.
 
-- **La primera computadora de tu papá:** pegá el
-  [primer prompt completo](setup/PROMPT_COMPUTADORA_NUEVA.md) en Codex.
-- **Computadora Windows nueva:** seguí [setup/COMPUTADORA_NUEVA.md](setup/COMPUTADORA_NUEVA.md).
-- **Windows con las herramientas listas:** abrí [START_HERE.md](START_HERE.md).
-- **Querés entender el sistema:** leé [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md).
+## Empezar
 
-## Qué crea
-
-El generador produce un repo independiente con:
-
-- una aplicación funcional para registrar inventos;
-- una preferencia inicial para móvil, escritorio o uso equilibrado, sin excluir
-  ningún tamaño de pantalla;
-- autenticación y datos en Supabase;
-- migración reproducible, RLS y pruebas de base de datos;
-- `CLAUDE.md`, `AGENTS.md`, plan, árbol y skill;
-- memoria semilla versionada que debe mantenerse sanitizada;
-- manifiesto PWA y accesos directos de Windows que levantan los servicios locales;
-- lint, pruebas, build y GitHub Actions.
-
-La primera ejecución inicializa Git local, pero no toca GitHub, Supabase remoto
-ni un dominio. Esas acciones
-se hacen después, con aprobación y siguiendo el checklist del proyecto.
-Los textos dados al generador quedan versionados en la app; deben describir el
-producto sin datos personales, información de clientes ni secretos.
-
-## Comandos principales
+En Windows con Node.js 24 y PowerShell 7:
 
 ```powershell
-# Revisar si la computadora está lista
-pwsh -NoProfile -File ./scripts/check-machine.ps1
+git clone https://github.com/icsmarketingsolutions/inventor-app-kit.git
+Set-Location inventor-app-kit
+npm --prefix apps/command-center ci
+npm run os:verify
+npm run os:install
+npm run os:start
+```
 
-# Crear una aplicación nueva
+El instalador crea accesos directos en el Escritorio y el menú Inicio. El Command Center abre como
+ventana independiente, levanta únicamente su servidor local y conserva la memoria entre reinicios.
+
+- **Computadora completamente nueva:** pegá el
+  [primer prompt completo](setup/PROMPT_COMPUTADORA_NUEVA.md) en Codex.
+- **Herramientas ya instaladas:** seguí [START_HERE.md](START_HERE.md).
+- **Arquitectura y método:** leé [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md).
+- **Referencia del Command Center:** leé
+  [apps/command-center/README.md](apps/command-center/README.md).
+
+## Crear una app nueva
+
+Esto es un paso posterior e independiente. El generador produce otro repo con Vite + React +
+TypeScript, memoria, Foundry, pruebas y un preset Supabase. Que Supabase se use o no depende del
+producto que se decida construir.
+
+```powershell
 pwsh -NoProfile -File ./scripts/New-InventorApp.ps1 `
-  -Name "Mis inventos" `
-  -Slug "mis-inventos" `
-  -Problem "Quiero ordenar ideas y convertirlas en prototipos" `
-  -Audience "Mi familia y yo" `
-  -FirstAction "Registrar un invento" `
+  -Name "Mi aplicación" `
+  -Slug "mi-aplicacion" `
+  -Problem "Problema que quiero resolver" `
+  -Audience "Personas que la usarán" `
+  -FirstAction "Primera acción útil" `
   -PrimaryUse "balanced" `
   -OutputRoot "C:\Proyectos"
-
-# Forjar un prompt para trabajar en ella
-node ./scripts/foundry.mjs `
-  --project "C:\Proyectos\mis-inventos" `
-  --mode plan `
-  --objective "Agregar fotos a cada invento" `
-  --out .foundry-output/PROMPT_ACTUAL.md
 ```
+
+`PrimaryUse` puede ser `mobile`, `desktop` o `balanced`. Define prioridades de diseño, pero toda app
+debe funcionar con tacto, mouse y teclado a 360, 768 y 1440 píxeles.
 
 ## Principios
 
-- Un proyecto por repo y una conversación dedicada por proyecto.
-- Contexto en capas; nunca cargar todo para “entender”.
 - Las decisiones viven en archivos, no en la memoria de un chat.
 - Cambios grandes empiezan con un plan aprobado.
 - Compilar no basta: cada flujo se prueba funcionando.
-- La experiencia principal define prioridades, no compatibilidad: toda interfaz
-  debe funcionar con tacto, mouse y teclado en móvil, tableta y escritorio.
-- Supabase remoto y producción nunca se modifican sin aprobación explícita.
-- Secretos solo en `.env`; jamás en Git ni en prompts.
+- Los agentes reciben solo proyectos registrados y confirmación explícita.
+- Supabase remoto, producción, deploy y DNS nunca se modifican sin aprobación explícita.
+- Secretos solo en `.env`; jamás en Git, memoria ni prompts.
 
-## Alcance de `v0.3.0`
+## Alcance de `v0.4.0`
 
-Incluye onboarding y diagnóstico verificados para Windows. El generador usa
-PowerShell 7 y Foundry usa Node, por lo que una persona avanzada puede ejecutarlos
-en macOS/Linux después de preparar equivalentes manuales; esa ruta todavía no
-tiene onboarding ni smoke oficial en `v0.3.0`. El starter usa Supabase local con Docker antes de conectar
-un proyecto remoto. En Windows también puede instalar accesos directos y abrirse como PWA en una ventana
-independiente; pagos, correo, observabilidad y automatizaciones se agregan cuando el primer flujo ya está
-validado.
+El Command Center, su memoria, Foundry, integración opcional con Ollama, Agent Ops y el acceso directo
+Windows están implementados. La voz local es una fase futura. Obsidian y Ollama son integraciones
+opcionales: se habilitan cuando la persona los instala, pero no bloquean el uso local del sistema.
 
 ## Licencia
 

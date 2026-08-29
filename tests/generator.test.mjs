@@ -43,7 +43,8 @@ test('genera una app completa, personalizada y portable', (context) => {
   const result = generate(outputRoot);
   const app = join(outputRoot, 'taller-de-prueba');
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(JSON.parse(readFileSync(join(app, '.inventor-kit.json'), 'utf8')).kitVersion, '0.3.0');
+  const kitVersion = readFileSync(join(root, 'VERSION'), 'utf8').trim();
+  assert.equal(JSON.parse(readFileSync(join(app, '.inventor-kit.json'), 'utf8')).kitVersion, kitVersion);
   const projectData = JSON.parse(readFileSync(join(app, 'src', 'project.generated.json'), 'utf8'));
   assert.equal(projectData.firstAction, 'Registrar una idea');
   assert.equal(projectData.primaryUse, 'mobile');

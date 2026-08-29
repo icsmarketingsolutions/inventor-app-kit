@@ -15,6 +15,7 @@ define prioridades, pero no permite romper el otro contexto.
 - `review`: revisa un diff sin modificarlo.
 - `audit`: busca riesgos de manera exhaustiva y priorizada.
 - `document`: sincroniza conocimiento, memoria y handoff.
+- `improve`: prioriza y verifica una mejora de alto impacto sin ampliar el alcance.
 
 ## Uso
 

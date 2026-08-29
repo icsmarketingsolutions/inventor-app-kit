@@ -5,6 +5,9 @@ coverage/
 generated-smoke/
 .foundry-output/
 *.log
+*.tsbuildinfo
+apps/command-center/.runtime/
+apps/command-center/dist/
 
 # Secretos y configuración local
 .env

@@ -7,7 +7,7 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const kitRoot = resolve(scriptDirectory, '..');
 const modesDirectory = join(kitRoot, 'foundry', 'modes');
 const blocksDirectory = join(kitRoot, 'foundry', 'blocks');
-const supportedModes = ['plan', 'build', 'fix', 'review', 'audit', 'document'];
+const supportedModes = ['plan', 'build', 'fix', 'review', 'audit', 'document', 'improve'];
 
 function fail(message) {
   process.stderr.write(`ERROR: ${message}\n`);

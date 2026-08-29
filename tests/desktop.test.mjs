@@ -7,10 +7,16 @@ import { runInNewContext } from 'node:vm';
 
 const root = resolve(import.meta.dirname, '..');
 const desktopRoot = join(root, 'templates', 'web-app', 'scripts', 'desktop');
+const commandCenterDesktopRoot = join(root, 'apps', 'command-center', 'scripts', 'desktop');
 
 test('todos los scripts de escritorio tienen sintaxis PowerShell válida', () => {
-  for (const name of readdirSync(desktopRoot).filter((entry) => entry.endsWith('.ps1'))) {
-    const path = join(desktopRoot, name);
+  const scripts = [desktopRoot, commandCenterDesktopRoot].flatMap((directory) =>
+    readdirSync(directory)
+      .filter((entry) => entry.endsWith('.ps1'))
+      .map((name) => ({ directory, name })),
+  );
+  for (const { directory, name } of scripts) {
+    const path = join(directory, name);
     const result = spawnSync('pwsh', [
       '-NoProfile',
       '-Command',
@@ -22,6 +28,17 @@ test('todos los scripts de escritorio tienen sintaxis PowerShell válida', () =>
     });
     assert.equal(result.status, 0, `${name}: ${result.stderr}${result.stdout}`);
   }
+});
+
+test('Command Center usa un puerto propio y no arranca Docker ni Supabase', () => {
+  const common = readFileSync(join(commandCenterDesktopRoot, 'command-center-common.ps1'), 'utf8');
+  const start = readFileSync(join(commandCenterDesktopRoot, 'start-app.ps1'), 'utf8');
+  assert.match(common, /Port\s+= 8421/);
+  assert.match(common, /127\.0\.0\.1:8421/);
+  assert.doesNotMatch(`${common}\n${start}`, /127\.0\.0\.1:8321/);
+  assert.doesNotMatch(start, /docker|supabase/i);
+  assert.match(start, /NODE_ENV/);
+  assert.match(start, /INVENTOR_OS_HOME/);
 });
 
 test('solo acepta URL y llave publicable del Supabase local', () => {

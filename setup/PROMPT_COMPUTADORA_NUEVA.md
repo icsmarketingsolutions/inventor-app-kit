@@ -1,156 +1,123 @@
 # Primer prompt para una computadora nueva
 
-Este es el primer mensaje que se pega en Codex cuando la computadora de tu papá todavía no tiene
-el kit. Instalá primero la aplicación oficial de Codex para Windows, abrí una tarea local y pegá
-todo el bloque. Codex hará el diagnóstico antes de instalar o cambiar nada.
+Instalá primero la aplicación oficial de Codex para Windows, abrí una tarea local y pegá todo este
+bloque. Es el arranque recomendado para una computadora que nunca se usó para desarrollar.
 
 ```text
 Quiero preparar esta computadora Windows desde cero para inventar aplicaciones con este kit público:
 https://github.com/icsmarketingsolutions/inventor-app-kit
 
-Trabajá conmigo en español sencillo. Yo estoy aprendiendo: explicá qué hace cada paso y esperá mi
-aprobación cuando lo indique este plan. Nunca me pidás que pegue un secreto en el chat.
+Trabajá conmigo en español sencillo. Yo estoy aprendiendo: explicá qué hace cada paso y verificá el
+resultado real. Nunca me pidás que pegue un secreto en el chat.
 
-OBJETIVO FINAL
-- Tener Git, GitHub CLI, Node.js 24 LTS actualizado, PowerShell 7, WSL 2, Docker Desktop y Codex.
-- Clonar y verificar inventor-app-kit sin modificarlo accidentalmente.
-- Crear mi primera app Vite + React + TypeScript, usable en móvil y escritorio.
-- Probar Supabase completamente en Docker local antes de conectar cualquier proyecto remoto.
-- Dejar memoria, Prompt Foundry, reglas de trabajo y pruebas listos para continuar otro día.
+RESULTADO PRINCIPAL
+- Clonar y verificar el kit público.
+- Instalar INVENTOR O.S. Command Center como aplicación de escritorio.
+- Abrir su memoria Markdown, grafo, Prompt Foundry y gestión de proyectos sin Supabase ni Docker.
+- Dejar listo el ciclo: idea -> memoria -> prompt -> agente -> verificación -> reporte.
+- Preparar herramientas futuras sin conectar producción, dominio ni una base remota.
 
 REGLAS NO NEGOCIABLES
-- No muestres ni me pidás contraseñas, tokens, cookies, códigos 2FA, recovery codes, llaves SSH,
-  claves de Supabase ni contenidos de archivos .env. Solo informá presente/ausente.
-- Usá únicamente páginas, instaladores y documentación oficiales.
-- No ejecutes instaladores, comandos como administrador, reinicios, compras ni acciones remotas sin
-  explicarme exactamente qué cambiarán y recibir mi aprobación.
-- No conectes producción. No hagas deploy. No compres dominios. No cambies DNS.
-- No crees ni modifiques todavía un proyecto remoto de Supabase.
-- No sobrescribas carpetas existentes ni descartes cambios de Git.
-- No uses npm como administrador. No instales la CLI de Supabase globalmente.
-- Si OAuth o 2FA abre un navegador, yo completo personalmente la pantalla.
-- Verificá la salida real de cada comando; un exit code 0 no basta si hay errores de Docker,
-  contenedores reiniciándose, puertos ocupados o warnings.
+- No muestres contraseñas, tokens, cookies, códigos 2FA, recovery codes, llaves SSH, claves de
+  Supabase ni contenidos de `.env`. Informá solo presente/ausente.
+- Usá páginas, instaladores y documentación oficiales.
+- Antes de instalar, elevar permisos, reiniciar o crear cuentas, explicá el cambio y pedime aprobación.
+- No hagas deploy, compras, DNS, repos remotos ni proyectos Supabase en esta sesión.
+- No sobrescribas carpetas ni descartes cambios Git.
+- No uses npm como administrador ni instales Supabase CLI globalmente.
+- Yo completo OAuth y 2FA personalmente en el navegador.
+- Leé la salida completa: exit code 0 no sustituye comprobar warnings, puertos o procesos fallidos.
 
 FASE 1 — DIAGNÓSTICO DE SOLO LECTURA
-1. Detectá la versión de Windows, PowerShell, Node, npm, Git, GitHub CLI, WSL, Docker y Codex sin
-   imprimir datos privados.
-2. Decime únicamente qué falta, qué está desactualizado y si hace falta reiniciar.
-3. Antes de instalar, mostrame una lista exacta con fuente oficial, versión y motivo.
+1. Detectá versión de Windows, PowerShell, Node, npm, Git, GitHub CLI, Codex, Docker Desktop,
+   Obsidian y Ollama sin imprimir identidad ni datos privados.
+2. Separá los resultados en: requerido para Command Center, opcional y futuro para apps con Supabase.
+3. Mostrame qué falta, fuente oficial, versión recomendada y si requiere reinicio.
 
-FASE 2 — REQUISITOS MÍNIMOS EN WINDOWS LIMPIO
-1. Usá primero el Windows PowerShell incluido en Windows para comprobar si winget está disponible.
-2. Si winget falta, abrí la ficha oficial de App Installer en Microsoft Store y dejame completar la
-   instalación. No descargues ejecutables desde buscadores.
-3. Mostrame el dry-run de estos dos paquetes oficiales y pedime aprobación:
+FASE 2 — MÍNIMO REQUERIDO
+1. Comprobá `winget` con el Windows PowerShell incluido. Si falta, abrí la ficha oficial de App
+   Installer en Microsoft Store y dejame completar la instalación.
+2. Mostrame el dry-run y pedime aprobación para instalar, solo si faltan:
    - Microsoft.PowerShell
    - Git.Git
-4. Solo si apruebo, instalalos con winget usando --exact y --source winget.
-5. Cerrá y volvé a abrir Codex o la terminal para refrescar PATH. Confirmá que `pwsh --version` y
-   `git --version` funcionan antes de intentar clonar.
+   - OpenJS.NodeJS.LTS, rama Node 24
+   - GitHub.cli
+3. Instalá únicamente lo aprobado con `winget --exact --source winget`.
+4. Refrescá PATH cerrando y abriendo terminal/Codex cuando sea necesario.
+5. Verificá `pwsh --version`, `git --version`, `node --version`, `npm --version` y `gh --version`.
 
-FASE 3 — CLON SEGURO DEL KIT
-1. Proponé C:\Proyectos\inventor-app-kit como ruta. Si ya existe, inspeccionala y frená: no la
-   sobrescribas ni la borres.
-2. Cloná con Git desde la URL pública anterior.
-3. Entrá al repositorio y verificá:
-   - git remote -v apunta únicamente a la URL pública esperada;
-   - la rama es main;
-   - git status está limpio.
-4. Leé README.md, START_HERE.md, setup/COMPUTADORA_NUEVA.md,
-   setup/MCP_Y_CUENTAS.md y scripts/check-machine.ps1 antes de continuar.
+FASE 3 — CLON SEGURO
+1. Proponé `C:\Proyectos\inventor-app-kit`. Si existe, inspeccionala y frená; no la sobrescribas.
+2. Cloná `https://github.com/icsmarketingsolutions/inventor-app-kit.git`.
+3. Verificá remote esperado, rama `main` y worktree limpio.
+4. Leé `README.md`, `START_HERE.md`, `apps/command-center/CLAUDE.md`,
+   `apps/command-center/AGENTS.md`, `apps/command-center/.agents/skills/inventor-os/SKILL.md` y
+   `apps/command-center/docs/ARBOL_CONOCIMIENTO.md`.
 
-FASE 4 — PREPARAR WINDOWS
-1. Corré este diagnóstico de solo lectura:
-   pwsh -NoProfile -File ./scripts/check-machine.ps1
-2. Corré el bootstrap sin -Install; esto debe ser solo un dry-run:
-   pwsh -NoProfile -File ./scripts/bootstrap-windows.ps1
-3. Mostrame el plan y frená para pedirme aprobación.
-4. Solo si apruebo, ejecutá el bootstrap con -Install desde PowerShell 7 como administrador.
-5. Si requiere reinicio, frená. Después del reinicio repetí check-machine.ps1 desde una terminal
-   normal.
-6. Abrí Docker Desktop, esperá el motor y verificá de verdad:
-   docker run --rm hello-world
+FASE 4 — CALIDAD DEL REPO PÚBLICO
+En `C:\Proyectos\inventor-app-kit` ejecutá y revisá:
+1. `npm ci`
+2. `npm --prefix apps/command-center ci`
+3. `npm run verify`
+4. `npm run os:verify`
+5. `npm audit`
+6. `npm --prefix apps/command-center audit`
+7. `git status --short`
+Requerido: pruebas, lint y build pasan; cero warnings, cero vulnerabilidades y worktree limpio.
 
-FASE 5 — VERIFICAR EL REPOSITORIO PÚBLICO
-Dentro de C:\Proyectos\inventor-app-kit ejecutá y revisá la salida completa:
-1. npm ci
-2. npm run verify
-3. npm audit
-4. git status --short
-El resultado requerido es: todas las pruebas pasan, cero warnings, cero vulnerabilidades y worktree
-limpio. Si algo falla, diagnosticá y corregí solo dentro de este repositorio; no sigás de fase.
+FASE 5 — INSTALAR INVENTOR O.S.
+1. Ejecutá `npm run os:install`.
+2. Verificá cada acceso directo del Escritorio y menú Inicio.
+3. Abrilo con `npm run os:start`; no debe iniciar Docker ni Supabase ni mostrar una consola negra.
+4. Ejecutá `npm run os:status` y confirmá una sola API local en `127.0.0.1:8421`.
+5. Abrilo una segunda vez y confirmá que reutiliza la instancia.
+6. En vivo verificá HUD, memoria, grafo, Foundry, proyectos y estado honesto de Ollama.
+7. Guardá una captura Markdown, recargá y confirmá que persiste y actualiza el grafo.
+8. Generá un prompt de modo `plan`, copialo y confirmá que no contiene rutas absolutas ni secretos.
 
-FASE 6 — CUENTAS Y CODEX
-1. Guiame para crear o asegurar mi cuenta GitHub con 2FA y recovery codes guardados fuera del repo.
-2. Configurá Git con mi correo noreply de GitHub sin mostrarlo en pantalla.
-3. Iniciá gh auth login y Codex mediante el navegador; yo completo OAuth.
-4. Verificá las sesiones sin imprimir identidad o credenciales.
-5. Explicame que cada app generada traerá su propio AGENTS.md y memory/INDEX.md; todavía no los busqués
-   en la raíz del kit ni inventés una segunda fuente de verdad.
+FASE 6 — MEMORIA COMPARTIDA CON OBSIDIAN
+1. Explicame dónde vive la memoria local sin imprimir otros datos personales.
+2. Si quiero interfaz de notas, proponé instalar Obsidian desde su fuente oficial y pedime aprobación.
+3. Abrí esa carpeta como vault. No actives Sync ni plugins comunitarios automáticamente.
+4. Confirmá que una nota creada en Obsidian aparece en el HUD y su `[[wikilink]]` en el grafo.
 
-FASE 7 — CREAR MI PRIMERA APP
-1. Preguntame, una por una, estas seis cosas: nombre de la app, problema que resuelve, usuario
-   principal, primera acción útil, experiencia prioritaria (móvil/escritorio/equilibrada) y ruta de
-   destino.
-2. Resumí mis respuestas y pedime confirmación antes de generar.
-3. Generá la app con el comando documentado en START_HERE.md. La base debe seguir siendo Vite + React
-   + TypeScript; la prioridad responsive es mi preferencia, pero debe funcionar desde 320 px hasta
-   escritorio, con teclado y controles táctiles.
-4. Dentro de la app generada corré npm ci, npm run lint, npm test, npm run build y npm audit.
-   Requerido: cero warnings, cero fallos y cero vulnerabilidades.
-5. En Windows, ejecutá `npm run desktop:install` y verificá que existan los accesos directos exactos
-   en el Escritorio y el menú Inicio. No abras todavía el acceso directo: primero validaremos la
-   cadena de base de datos desde cero.
-6. Leé CLAUDE.md, AGENTS.md, .agents/skills/build-an-app/SKILL.md, memory/INDEX.md y
-   docs/ARBOL_CONOCIMIENTO.md. Mostrame cómo usar Prompt Foundry, las funciones, la memoria y el
-   ciclo plan -> implementar -> probar -> documentar -> commit.
+FASE 7 — CUENTAS Y GIT
+1. Guiame para crear o asegurar GitHub con 2FA y recovery codes guardados fuera del repo.
+2. Configurá Git con mi correo `noreply` de GitHub sin mostrarlo en el chat.
+3. Ejecutá `gh auth login`; yo completo OAuth.
+4. Verificá la sesión sin imprimir token o identidad innecesaria.
+5. No crees todavía repos remotos. Cada invento tendrá su repo cuando exista una decisión de producto.
 
-FASE 8 — SUPABASE LOCAL, DESDE CERO
-1. Confirmá que Docker está sano y que ningún stack de esta app quedó ejecutándose.
-2. En la app generada ejecutá, leyendo la salida completa:
-   npx --no-install supabase start
-   npx --no-install supabase db reset
-   npx --no-install supabase test db
-   npx --no-install supabase db lint --local --schema public --level warning --fail-on warning
-   npx --no-install supabase db advisors --local --type security --level info --fail-on warn
-3. Confirmá que todas las pruebas pgTAP pasan, RLS está activa, anon no tiene CRUD, cada usuario solo
-   ve sus datos y no hay contenedores reiniciándose.
-4. Usá solo la URL y llave publicable locales como variables de entorno. Nunca service_role.
-5. Al terminar ejecutá npx --no-install supabase stop --no-backup y comprobá que no queden contenedores, redes ni
-   volúmenes de ese stack.
-6. Si Docker o Supabase falla, frená. Nunca uses un Supabase remoto como sustituto.
+FASE 8 — OLLAMA LOCAL OPCIONAL
+1. Explicame costo de disco/RAM y que Ollama no es necesario para memoria o Foundry.
+2. Solo si lo apruebo, instalalo desde la fuente oficial y elegí un modelo pequeño apropiado para el
+   hardware; pedime aprobación antes de descargarlo.
+3. Verificá el servicio únicamente en localhost y una conversación desde la consola del HUD.
+4. No expongas Ollama a la red local ni Internet.
 
-FASE 9 — PRUEBA REAL COMO APP DE ESCRITORIO
-1. Arrancá primero la app con `npm run dev`, sin variables de Supabase, y probá el modo demo en un
-   navegador real. Detenela después.
-2. Con el stack todavía limpio, abrí el acceso directo del Escritorio como lo haría una persona.
-   Verificá en vivo que el lanzador inicia o espera Docker Desktop, levanta Supabase local y Vite,
-   y abre Chrome o Edge en una ventana independiente sin una consola negra auxiliar.
-3. Ejecutá `npm run desktop:status`: Docker, Supabase y Vite deben aparecer como `listo`, sin
-   imprimir URLs con credenciales ni llaves. Abrí el mismo acceso directo una segunda vez y
-   comprobá que enfoca la ventana existente, sin duplicar Vite ni la ventana.
-4. En la app de escritorio probá: crear cuenta local, iniciar sesión, crear/editar/eliminar un
-   invento, cerrar sesión y aislamiento con una segunda cuenta.
-5. Verificá a 360, 768 y 1440 px; recorré foco con teclado y comprobá que no haya errores visibles ni
-   en consola.
-6. Confirmá que el manifiesto, icono y service worker responden, y que Chrome o Edge reconoce la app
-   como instalable en `localhost`. El acceso directo debe quedar instalado para usarlo mañana.
-7. Cerrá la ventana y ejecutá `npm run desktop:stop`. Confirmá que Vite y Supabase se detienen, los
-   datos locales se conservan y Docker Desktop sigue abierto para otras aplicaciones.
+FASE 9 — CREAR EL PRIMER PRODUCTO, SOLO SI YO LO PIDO
+1. Preguntame de una en una: nombre, problema, persona usuaria, primera acción útil, prioridad
+   móvil/escritorio/equilibrada y carpeta destino.
+2. Registrá primero la decisión en la memoria y generá un prompt `plan` en Foundry.
+3. Tras mi confirmación, usá el generador documentado en `START_HERE.md` para crear otro repo Vite +
+   React + TypeScript, responsive a 360, 768 y 1440 píxeles.
+4. Decidí Supabase por necesidad: usarlo solo si el producto necesita autenticación o datos compartidos.
+   Una app puramente local no debe recibir complejidad de nube por defecto.
+5. Verificá lint, pruebas, build y flujo real de la nueva app.
+
+FASE 10 — HERRAMIENTAS FUTURAS, NO EJECUTAR AHORA
+Dejame una lista priorizada, sin instalar ni conectar:
+- WSL 2 y Docker Desktop para probar migraciones Supabase localmente;
+- cuenta/proyecto Supabase DEV y MCP por OAuth limitado al `project_ref`, `read_only=true` al explorar;
+- MCPs adicionales solo cuando una integración concreta los necesite;
+- Cloudflare/hosting y dominio solo después de una app validada, con costos y revisión DNS;
+- observabilidad, correo y pagos después del primer flujo útil.
 
 CIERRE
-Entregame una tabla breve con cada fase: verificada en vivo, pendiente o bloqueada. Incluí versiones
-instaladas, pruebas ejecutadas, cualquier warning y la ruta exacta de la primera app. Confirmá que no
-mostraste secretos, no tocaste producción, no desplegaste y no cambiaste DNS. Dejame el siguiente
-paso recomendado, pero no lo ejecutes sin aprobación.
-
-Solo después de que todo lo local esté verde, proponé una sesión separada para:
-- crear un proyecto Supabase exclusivamente DEV;
-- conectar su MCP por OAuth con project_ref explícito, read_only=true y features=database,docs;
-- crear un repositorio GitHub privado para mi primera app;
-- preparar deploy y dominio con una revisión de costos y DNS.
+Entregame una tabla corta por fase: verificada en vivo, pendiente o bloqueada. Incluí versiones, pruebas,
+warnings y ubicación del Command Center. Confirmá que no mostraste secretos, no tocaste producción,
+no desplegaste, no cambiaste DNS y no conectaste Supabase remoto. Dejame el próximo paso recomendado.
 ```
 
-El prompt contiene solo la URL pública del kit. Las decisiones personales y las sesiones se completan
-en la computadora nueva; no se copian desde otra computadora.
+La URL del bloque es pública. Las decisiones, proyectos y memoria real se crean en la computadora de
+la persona y nunca se copian desde otra instalación.
