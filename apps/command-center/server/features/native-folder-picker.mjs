@@ -146,12 +146,12 @@ export function createNativeFolderPicker({
     if (active) {
       throw new AppError(409, 'FOLDER_PICKER_BUSY', 'Ya hay un selector de carpetas abierto.');
     }
+    if (typeof initialPath === 'string' && initialPath.startsWith('\\\\')) {
+      throw new AppError(400, 'FOLDER_PICKER_UNC_REJECTED', 'Elegí una carpeta local de esta computadora.');
+    }
     if (initialPath !== undefined && initialPath !== '' &&
         (typeof initialPath !== 'string' || !isAbsolute(initialPath))) {
       throw new AppError(400, 'INVALID_FOLDER_PATH', 'La ruta inicial debe ser absoluta.');
-    }
-    if (typeof initialPath === 'string' && initialPath.startsWith('\\\\')) {
-      throw new AppError(400, 'FOLDER_PICKER_UNC_REJECTED', 'Elegí una carpeta local de esta computadora.');
     }
 
     active = true;

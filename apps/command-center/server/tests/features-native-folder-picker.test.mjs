@@ -42,7 +42,7 @@ test('devuelve una carpeta real y pasa la ruta inicial solo por stdin', async (c
   assert.equal(executable, 'C:\\Program Files\\PowerShell\\7\\pwsh.exe');
   assert.ok(args.includes('-STA'));
   assert.ok(args.includes('-NonInteractive'));
-  assert.equal(args.some((argument) => argument.includes(files.root)), false);
+  assert.equal(args.includes(files.root), false);
   assert.deepEqual(JSON.parse(execution.input), { initialPath: files.root });
 });
 
