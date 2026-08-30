@@ -63,5 +63,8 @@ grabar/detener, reutilizar texto, cancelar durante procesamiento y ausencia de W
 - El selector de proyectos usa `IFileOpenDialog` y debe recibir siempre el HWND exacto del HUD como
   propietario. Sin dueño, Windows puede abrirlo detrás; no agregués fallbacks que muestren un diálogo
   huérfano. Ruta inicial por stdin, ejecutable/script absolutos y un solo selector activo.
+- Los tests del selector corren también en Ubuntu simulando `platform: 'win32'`: comprobá que la ruta
+  inicial exacta no viaje en argv (el script de la fixture sí comparte su raíz) y rechazá UNC antes de
+  `isAbsolute`, cuyo criterio depende del sistema anfitrión.
 - `ScriptProcessorNode` mantiene hoy la captura compatible, pero está deprecado; una fase futura debe
   migrar a `AudioWorklet` sin perder limpieza, remuestreo ni soporte del acceso directo.
