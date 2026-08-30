@@ -4,8 +4,10 @@ import { createServer } from 'node:http';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createAgentOps } from '../features/agent-ops.mjs';
+import { createNativeFolderPicker } from '../features/native-folder-picker.mjs';
 import { OllamaError, createOllamaClient } from '../features/ollama.mjs';
 import { forgePrompt, listFoundryCatalog } from '../features/prompt-foundry.mjs';
+import { createTranscriptionService, readWavBody } from '../features/transcription.mjs';
 import { AppError, publicError } from './errors.mjs';
 import { projectsStatus } from './git.mjs';
 import {
@@ -40,6 +42,7 @@ const MIME_TYPES = new Map([
 const SECURITY_HEADERS = Object.freeze({
   'Content-Security-Policy': "default-src 'self'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'none'; frame-ancestors 'none'; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self'",
   'Cross-Origin-Opener-Policy': 'same-origin',
+  'Permissions-Policy': 'microphone=(self), camera=(), geolocation=()',
   'Referrer-Policy': 'no-referrer',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
@@ -218,12 +221,59 @@ async function handleApi(request, response, url, context) {
     sendJson(response, 200, await context.ollama.health(), headers);
     return;
   }
+  if (request.method === 'GET' && url.pathname === '/api/transcription/status') {
+    sendJson(response, 200, await context.transcription.status(), headers);
+    return;
+  }
   if (request.method === 'GET' && url.pathname === '/api/agents/activity') {
     sendJson(response, 200, { activity: await context.agentOps.activity() }, headers);
     return;
   }
   if (request.method !== 'POST') {
     throw new AppError(404, 'API_NOT_FOUND', 'La ruta de API no existe.');
+  }
+  if (url.pathname === '/api/transcription') {
+    if (!request.headers.origin || !allowedOrigin(request.headers.origin, request.headers.host)) {
+      throw new AppError(403, 'BROWSER_ORIGIN_REQUIRED', 'La transcripción solo acepta el origen local de la aplicación.');
+    }
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    const close = () => { if (!response.writableEnded) controller.abort(); };
+    request.once('aborted', abort);
+    response.once('close', close);
+    try {
+      const audio = await readWavBody(request);
+      const result = await context.transcription.transcribe(audio, { signal: controller.signal });
+      sendJson(response, 200, result, headers);
+    } finally {
+      request.off('aborted', abort);
+      response.off('close', close);
+    }
+    return;
+  }
+  if (url.pathname === '/api/system/select-folder') {
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    const close = () => { if (!response.writableEnded) controller.abort(); };
+    request.once('aborted', abort);
+    response.once('close', close);
+    if (!request.headers.origin || !allowedOrigin(request.headers.origin, request.headers.host)) {
+      throw new AppError(403, 'BROWSER_ORIGIN_REQUIRED', 'El selector solo acepta el origen local de la aplicación.');
+    }
+    try {
+      const input = await readJsonBody(request);
+      if (controller.signal.aborted || request.aborted || response.destroyed) {
+        throw new AppError(499, 'FOLDER_PICKER_CANCELLED', 'El selector se cerró.');
+      }
+      if (input.path !== undefined && typeof input.path !== 'string') {
+        throw new AppError(400, 'INVALID_FOLDER_PATH', 'Elegí una carpeta local válida.');
+      }
+      sendJson(response, 200, await context.folderPicker(input.path, { signal: controller.signal }), headers);
+    } finally {
+      request.off('aborted', abort);
+      response.off('close', close);
+    }
+    return;
   }
   const input = await readJsonBody(request);
   if (url.pathname === '/api/projects') {
@@ -319,6 +369,16 @@ export async function createCommandCenterServer(options = {}) {
     timeoutMs: options.ollamaTimeoutMs || 20_000,
   });
   context.agentOps = options.agentOps || createAgentOps({ memoryRoot: context.memoryRoot });
+  const defaultVoiceRoot = process.platform === 'win32' && process.env.LOCALAPPDATA
+    ? join(process.env.LOCALAPPDATA, 'InventorOS', 'voice')
+    : join(runtimeRoot, 'voice');
+  context.transcription = options.transcriptionClient || createTranscriptionService({
+    voiceRoot: options.voiceRoot || process.env.INVENTOR_OS_VOICE_HOME || defaultVoiceRoot,
+  });
+  await context.transcription.initialize?.();
+  context.folderPicker = options.folderPicker || createNativeFolderPicker({
+    scriptPath: options.folderPickerScript || join(appRoot, 'scripts', 'desktop', 'select-folder.ps1'),
+  });
   const server = createServer(async (request, response) => {
     try {
       if (!requestIsLocal(request) || !allowedOrigin(request.headers.origin, request.headers.host)) {
@@ -333,6 +393,7 @@ export async function createCommandCenterServer(options = {}) {
         && await serveStatic(request, response, distRoot, url.pathname)) return;
       throw new AppError(404, 'NOT_FOUND', 'El recurso no existe.');
     } catch (error) {
+      if (response.destroyed || response.writableEnded) return;
       if (response.headersSent) {
         response.destroy();
         return;

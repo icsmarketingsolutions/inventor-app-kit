@@ -11,7 +11,8 @@ Abrí PowerShell dentro de `inventor-app-kit`:
 pwsh -NoProfile -File ./scripts/check-machine.ps1
 ```
 
-Si aparece `FALTA`, seguí [setup/COMPUTADORA_NUEVA.md](setup/COMPUTADORA_NUEVA.md) y repetí el chequeo.
+Si aparece `FALTA`, seguí la preparación mínima de [setup/COMPUTADORA_NUEVA.md](setup/COMPUTADORA_NUEVA.md)
+y repetí el chequeo. WSL, Docker y Supabase son `INFO` opcional hasta que una app concreta los necesite.
 
 ## 2. Instalá y verificá el Command Center
 
@@ -37,7 +38,8 @@ Detener conserva las notas. Volver a abrir el acceso directo reutiliza una únic
 
 ## 3. Registrá el primer proyecto
 
-En `SYSTEM VITALS`, elegí **NUEVO PROYECTO** y seleccioná una carpeta Git local. El servidor guarda la
+En `COMMAND DECK`, elegí **NUEVO PROYECTO** y pulsá **BUSCAR CARPETA**. Se abre el Explorador nativo
+de Windows para elegir una carpeta Git local; también podés escribir la ruta. El servidor guarda la
 ruta únicamente en la configuración privada de esta computadora; el HUD y los prompts muestran un
 identificador relativo o seguro.
 
@@ -49,7 +51,21 @@ Después podés:
 - copiar el contrato o lanzar un agente después de confirmar;
 - conectar Ollama cuando quieras usar un modelo completamente local.
 
-## 4. Crear una aplicación es opcional y viene después
+## 4. Voz local opcional
+
+Para dictar ideas sin nube, instalá una sola vez el motor y el modelo multilingüe:
+
+```powershell
+npm run os:voice:install
+npm run os:start
+```
+
+En `VOICE TRANSCRIPTION`, pulsá **GRABAR**, aceptá el micrófono, hablá y elegí **DETENER Y
+TRANSCRIBIR**. El texto queda editable y puede enviarse a Foundry, Consola o Memoria. La grabación se
+borra automáticamente. El flujo admite 120 segundos por toma y no requiere Supabase, Docker, Ollama,
+Python ni FFmpeg.
+
+## 5. Crear una aplicación es opcional y viene después
 
 Cuando ya exista una idea concreta, el generador puede crear otro repo:
 

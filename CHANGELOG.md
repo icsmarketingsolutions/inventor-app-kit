@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0 — 2026-08-29
+
+- `VOICE TRANSCRIPTION` graba desde un gesto explícito, convierte a WAV PCM mono 16 kHz y transcribe
+  offline con `whisper.cpp`; el audio temporal se elimina siempre.
+- Instalador Windows reproducible y con staging para el runtime mínimo y el modelo `base`; release,
+  revisión y hashes SHA-256 quedan fijados y se revalidan antes de cada uso.
+- La transcripción editable puede enviarse a Prompt Foundry, Consola, portapapeles o Memoria; solo la
+  última acción la persiste.
+- API raw endurecida con Origin exacto, RIFF/WAVE único, 120 segundos/5 MiB, mutex previo a cualquier
+  espera, cancelación que aguarda al proceso y limpieza verificada.
+- Registrar proyecto abre el selector moderno de carpetas de Windows delante del HUD, con ventana
+  propietaria, proceso único, ruta por stdin y validación local; el campo manual sigue disponible.
+- El instalador de voz solo reemplaza un destino dedicado vacío o marcado por INVENTOR O.S. y
+  conserva el respaldo si un rollback no puede verificarse.
+
 ## 0.4.0 — 2026-08-29
 
 - INVENTOR O.S. Command Center pasa a ser el producto principal, local y sin Supabase obligatorio.

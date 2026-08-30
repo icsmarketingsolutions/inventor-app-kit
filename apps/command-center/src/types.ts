@@ -67,6 +67,22 @@ export interface OllamaStatus {
   message?: string;
 }
 
+export interface TranscriptionStatus {
+  state: CapabilityState;
+  available: boolean;
+  busy?: boolean;
+  engine?: string;
+  model?: string;
+  language?: string;
+  maxSeconds?: number;
+  message?: string;
+}
+
+export interface NativeFolderSelection {
+  selected: boolean;
+  path: string | null;
+}
+
 export interface AgentActivity {
   id: string;
   at: string;

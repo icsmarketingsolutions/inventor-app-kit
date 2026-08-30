@@ -14,6 +14,7 @@ RESULTADO PRINCIPAL
 - Clonar y verificar el kit público.
 - Instalar INVENTOR O.S. Command Center como aplicación de escritorio.
 - Abrir su memoria Markdown, grafo, Prompt Foundry y gestión de proyectos sin Supabase ni Docker.
+- Dejar disponible transcripción local gratuita, sin enviar ni conservar audio.
 - Dejar listo el ciclo: idea -> memoria -> prompt -> agente -> verificación -> reporte.
 - Preparar herramientas futuras sin conectar producción, dominio ni una base remota.
 
@@ -75,27 +76,37 @@ FASE 5 — INSTALAR INVENTOR O.S.
 7. Guardá una captura Markdown, recargá y confirmá que persiste y actualiza el grafo.
 8. Generá un prompt de modo `plan`, copialo y confirmá que no contiene rutas absolutas ni secretos.
 
-FASE 6 — MEMORIA COMPARTIDA CON OBSIDIAN
+FASE 6 — VOZ LOCAL OPCIONAL
+1. Explicame que la voz usa `whisper.cpp`, funciona offline después de descargar el modelo y no
+   necesita Ollama, Supabase, Docker, Python ni FFmpeg.
+2. Mostrame el tamaño aproximado y pedime aprobación antes de ejecutar `npm run os:voice:install`.
+3. Confirmá que el instalador verifica release y hashes y guarda todo fuera de Git.
+4. Reiniciá INVENTOR O.S.; verificá que VOZ indique LISTO.
+5. En vivo: dejame aceptar personalmente el permiso del micrófono, grabar una frase, detener y ver la
+   transcripción. Enviá una copia al objetivo de Foundry y guardá otra explícitamente en Memoria.
+6. Confirmá que no quedó ningún WAV temporal y que el motor funciona sin red.
+
+FASE 7 — MEMORIA COMPARTIDA CON OBSIDIAN
 1. Explicame dónde vive la memoria local sin imprimir otros datos personales.
 2. Si quiero interfaz de notas, proponé instalar Obsidian desde su fuente oficial y pedime aprobación.
 3. Abrí esa carpeta como vault. No actives Sync ni plugins comunitarios automáticamente.
 4. Confirmá que una nota creada en Obsidian aparece en el HUD y su `[[wikilink]]` en el grafo.
 
-FASE 7 — CUENTAS Y GIT
+FASE 8 — CUENTAS Y GIT
 1. Guiame para crear o asegurar GitHub con 2FA y recovery codes guardados fuera del repo.
 2. Configurá Git con mi correo `noreply` de GitHub sin mostrarlo en el chat.
 3. Ejecutá `gh auth login`; yo completo OAuth.
 4. Verificá la sesión sin imprimir token o identidad innecesaria.
 5. No crees todavía repos remotos. Cada invento tendrá su repo cuando exista una decisión de producto.
 
-FASE 8 — OLLAMA LOCAL OPCIONAL
+FASE 9 — OLLAMA LOCAL OPCIONAL
 1. Explicame costo de disco/RAM y que Ollama no es necesario para memoria o Foundry.
 2. Solo si lo apruebo, instalalo desde la fuente oficial y elegí un modelo pequeño apropiado para el
    hardware; pedime aprobación antes de descargarlo.
 3. Verificá el servicio únicamente en localhost y una conversación desde la consola del HUD.
 4. No expongas Ollama a la red local ni Internet.
 
-FASE 9 — CREAR EL PRIMER PRODUCTO, SOLO SI YO LO PIDO
+FASE 10 — CREAR EL PRIMER PRODUCTO, SOLO SI YO LO PIDO
 1. Preguntame de una en una: nombre, problema, persona usuaria, primera acción útil, prioridad
    móvil/escritorio/equilibrada y carpeta destino.
 2. Registrá primero la decisión en la memoria y generá un prompt `plan` en Foundry.
@@ -105,7 +116,7 @@ FASE 9 — CREAR EL PRIMER PRODUCTO, SOLO SI YO LO PIDO
    Una app puramente local no debe recibir complejidad de nube por defecto.
 5. Verificá lint, pruebas, build y flujo real de la nueva app.
 
-FASE 10 — HERRAMIENTAS FUTURAS, NO EJECUTAR AHORA
+FASE 11 — HERRAMIENTAS FUTURAS, NO EJECUTAR AHORA
 Dejame una lista priorizada, sin instalar ni conectar:
 - WSL 2 y Docker Desktop para probar migraciones Supabase localmente;
 - cuenta/proyecto Supabase DEV y MCP por OAuth limitado al `project_ref`, `read_only=true` al explorar;

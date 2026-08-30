@@ -16,12 +16,29 @@ try {
     $state = Get-CommandCenterState -Config $config
     $node = Find-InventorExecutable -Names @('node.exe', 'node')
     if ($state -and $node -and (Test-CommandCenterProcess -State $state -NodePath $node)) {
-        try {
-            $process = Get-Process -Id ([int]$state.pid) -ErrorAction Stop
-            $process.Kill($true)
-            if (-not $process.WaitForExit(10000)) { $failed = $true }
+        $voiceIdle = $false
+        for ($attempt = 0; $attempt -lt 50 -and -not $voiceIdle; $attempt++) {
+            try {
+                $voiceStatus = Invoke-RestMethod -Uri "$($config.Url)/api/transcription/status" -TimeoutSec 2
+                $busyProperty = $voiceStatus.PSObject.Properties['busy']
+                $voiceIdle = $null -eq $busyProperty -or $busyProperty.Value -ne $true
+            }
+            catch {
+                $voiceIdle = $false
+            }
+            if (-not $voiceIdle) { Start-Sleep -Milliseconds 200 }
         }
-        catch { $failed = $true }
+        if (-not $voiceIdle) {
+            $failed = $true
+        }
+        else {
+            try {
+                $process = Get-Process -Id ([int]$state.pid) -ErrorAction Stop
+                $process.Kill($true)
+                if (-not $process.WaitForExit(10000)) { $failed = $true }
+            }
+            catch { $failed = $true }
+        }
     }
     elseif ($state) {
         $failed = $true

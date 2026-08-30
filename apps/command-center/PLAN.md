@@ -13,11 +13,16 @@ paridad funcional y visual respecto a V.A.U.L.T., sin copiar datos privados ni e
 - [x] F3 — Prompt Foundry visual para uno o varios proyectos y Claude/Codex.
 - [x] F4 — Ollama local opcional: salud, modelos, consola y refinador.
 - [x] F5 — System Vitals, Agent Ops y lanzamiento seguro.
-- [ ] F6 — voz local opcional y pulido completo.
+- [x] F6 — voz local opcional: grabar, detener, transcribir offline y reutilizar el texto.
+- [ ] F6.1 — dictado incremental con ventanas, VAD y reconciliación de solapamiento.
 - [ ] F7 — presets futuros de apps locales o con Supabase.
 
 Cada fase marcada tiene pruebas automatizadas y su flujo determinista verificado en vivo. Las
 integraciones externas opcionales se reportan por separado cuando la herramienta no está instalada.
+
+F6 usa `whisper.cpp` y el modelo multilingüe `base`, instalados fuera de Git con hashes fijados. El
+flujo estable es grabar y detener; el dictado incremental queda separado porque Whisper no ofrece
+streaming palabra por palabra y requiere reconciliar fragmentos.
 
 F4 queda completa como integración opcional y degradación honesta; una conversación real requiere
 que la persona instale Ollama y descargue un modelo. F5 verifica el contrato seguro y el registro de

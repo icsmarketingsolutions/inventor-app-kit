@@ -12,7 +12,7 @@ abren en el navegador.
 - PowerShell 7 para ejecutar los scripts del kit.
 - Node.js **24 LTS** y npm para construir la aplicación.
 - Git y GitHub CLI para guardar el historial y sincronizar el proyecto.
-- WSL 2 y Docker Desktop para probar Supabase localmente.
+- Opcional más adelante: WSL 2 y Docker Desktop para probar Supabase localmente.
 - Codex para trabajar con la aplicación.
 - La CLI de Supabase dentro de cada proyecto, no como instalación global.
 
@@ -22,7 +22,7 @@ abren en el navegador.
 2. Confirmá que la virtualización está habilitada en el Administrador de tareas:
    `Rendimiento > CPU > Virtualización: Habilitada`.
 3. Usá una cuenta de Windows con permiso para instalar aplicaciones.
-4. Reservá al menos 15 GB libres para Docker y sus imágenes locales.
+4. Si luego vas a usar Supabase local, reservá al menos 15 GB libres para Docker y sus imágenes.
 
 Si `winget` no existe, instalá o actualizá **App Installer** desde Microsoft
 Store. No descargues instaladores desde anuncios o páginas no oficiales.
@@ -67,14 +67,17 @@ PowerShell 7 normal (sin “Ejecutar como administrador”), instalá la versió
 Codex indicada por el kit:
 
 ```powershell
-npm install --global @openai/codex@0.150.1
+npm install --global @openai/codex@0.151.0
 ```
 
 Separar este paso evita ejecutar scripts npm con privilegios elevados. Cuando
 actualices Codex, verificá primero una versión oficial más reciente y cambiá el
 pin de forma deliberada.
 
-## 4. Terminá WSL 2 y Docker Desktop
+## 4. Opcional: prepará WSL 2 y Docker cuando una app use Supabase
+
+No necesitás este paso para abrir INVENTOR O.S., su memoria, grafo, voz o Prompt Foundry. Cuando una
+app concreta necesite Supabase, repetí el bootstrap con `-Install -IncludeAppTooling` y luego:
 
 1. Abrí Docker Desktop.
 2. Aceptá usar el motor basado en WSL 2 si lo pregunta.
@@ -104,13 +107,14 @@ pwsh -NoProfile -File ./scripts/check-machine.ps1
 ```
 
 Cada requisito aparece como `OK`, `FALTA` o `INFO`. Corregí todo lo marcado
-`FALTA` y repetí el comando. En particular:
+`FALTA` y repetí el comando. WSL, Docker y Supabase aparecen como `INFO` hasta que una app los necesite.
+En particular:
 
 - Node debe ser 24 LTS y, como mínimo, `v24.18.1`; el bootstrap fija una revisión
   disponible más reciente.
 - Git debe tener nombre y correo configurados, aunque el chequeo nunca los
   muestra.
-- Docker Desktop debe estar abierto.
+- Docker Desktop debe estar abierto únicamente al trabajar con una app que use Supabase local.
 - GitHub CLI debe tener una sesión iniciada.
 - Codex debe responder desde la terminal.
 
@@ -135,8 +139,8 @@ Continuá en [MCP_Y_CUENTAS.md](MCP_Y_CUENTAS.md). Ahí vas a:
 
 1. proteger GitHub con 2FA;
 2. iniciar sesión en GitHub y Codex usando el navegador;
-3. crear un proyecto **solo de desarrollo** en Supabase;
-4. conectar el MCP de Supabase con OAuth, limitado a ese proyecto y en modo de
+3. cuando exista una app que lo necesite, crear un proyecto **solo de desarrollo** en Supabase;
+4. en ese momento, conectar el MCP de Supabase con OAuth, limitado a ese proyecto y en modo de
    solo lectura.
 
 No conectes producción durante la preparación inicial.
@@ -146,10 +150,10 @@ No conectes producción durante la preparación inicial.
 La computadora está lista cuando:
 
 - `check-machine.ps1` termina sin requisitos `FALTA`;
-- `docker run --rm hello-world` funciona;
+- si ya preparaste Supabase local, `docker run --rm hello-world` funciona;
 - GitHub tiene 2FA activa y `gh auth status` funciona;
 - Codex abre y puede leer la carpeta del kit;
-- el MCP de Supabase solo ve el proyecto de desarrollo y no puede escribir.
+- si ya conectaste Supabase, su MCP solo ve el proyecto de desarrollo y no puede escribir.
 
 Después volvé a [START_HERE.md](../START_HERE.md) para crear la primera app.
 

@@ -8,6 +8,8 @@ import type {
   OllamaStatus,
   Project,
   StatusResponse,
+  TranscriptionStatus,
+  NativeFolderSelection,
 } from "../types";
 
 interface ApiErrorBody {
@@ -68,6 +70,12 @@ export const api = {
   projects: async () => (await request<{ projects: Project[] }>("/api/projects")).projects,
   addProject: async (name: string, path: string) =>
     (await post<{ project: Project }>("/api/projects", { name, path })).project,
+  selectProjectFolder: (path?: string, signal?: AbortSignal) =>
+    request<NativeFolderSelection>("/api/system/select-folder", {
+      method: "POST",
+      body: JSON.stringify({ path }),
+      signal,
+    }),
   notes: async () =>
     (await request<{ notes: NoteSummary[] }>("/api/memory/notes")).notes,
   searchNotes: async (query: string) =>
@@ -160,4 +168,16 @@ export const api = {
   }) => await post<{ ok: true }>("/api/agents/launch", payload),
   activity: async () =>
     (await request<{ activity: AgentActivity[] }>("/api/agents/activity")).activity,
+  transcriptionStatus: () => request<TranscriptionStatus>("/api/transcription/status"),
+  transcribeAudio: (audio: Uint8Array, signal?: AbortSignal) => request<{
+    transcript: string;
+    durationSeconds: number;
+    language: string;
+    model: string;
+  }>("/api/transcription", {
+    method: "POST",
+    headers: { "Content-Type": "audio/wav" },
+    body: Uint8Array.from(audio).buffer,
+    signal,
+  }),
 };

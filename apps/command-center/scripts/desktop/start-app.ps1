@@ -36,6 +36,7 @@ try {
     $startInfo.CreateNoWindow = $true
     $startInfo.Environment['NODE_ENV'] = 'production'
     $startInfo.Environment['INVENTOR_OS_HOME'] = $config.DataDir
+    $startInfo.Environment['INVENTOR_OS_PWSH'] = [System.IO.Path]::GetFullPath((Join-Path $PSHOME 'pwsh.exe'))
     $startInfo.ArgumentList.Add($entry)
     $startInfo.ArgumentList.Add('--port')
     $startInfo.ArgumentList.Add([string]$config.Port)

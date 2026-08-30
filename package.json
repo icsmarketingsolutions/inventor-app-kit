@@ -1,6 +1,6 @@
 {
   "name": "inventor-app-kit",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -18,6 +18,8 @@
     "os:install": "npm --prefix apps/command-center run desktop:install",
     "os:start": "npm --prefix apps/command-center run desktop:start",
     "os:status": "npm --prefix apps/command-center run desktop:status",
-    "os:stop": "npm --prefix apps/command-center run desktop:stop"
+    "os:stop": "npm --prefix apps/command-center run desktop:stop",
+    "os:voice:install": "npm --prefix apps/command-center run voice:install",
+    "os:voice:smoke": "npm --prefix apps/command-center run voice:smoke"
   }
 }

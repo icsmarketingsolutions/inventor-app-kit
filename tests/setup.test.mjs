@@ -40,11 +40,20 @@ test('la guía fija Node 24, separa Codex de elevación y usa MCP por proyecto',
   const bootstrap = readFileSync(join(root, 'scripts', 'bootstrap-windows.ps1'), 'utf8');
   const computer = readFileSync(join(root, 'setup', 'COMPUTADORA_NUEVA.md'), 'utf8');
   const mcp = readFileSync(join(root, 'setup', 'MCP_Y_CUENTAS.md'), 'utf8');
-  assert.match(bootstrap, /Version = '24\.19\.0'/);
+  assert.match(bootstrap, /Version = '24\.20\.0'/);
+  assert.match(bootstrap, /IncludeAppTooling/);
   assert.match(readFileSync(join(root, 'scripts', 'check-machine.ps1'), 'utf8'), /24\.18\.1/);
   assert.doesNotMatch(bootstrap, /npm.*install.*@openai\/codex/s);
-  assert.match(computer, /@openai\/codex@0\.150\.1/);
+  assert.match(computer, /@openai\/codex@0\.151\.0/);
   assert.match(mcp, /\.codex\/config\.toml/);
+});
+
+test('VERSION coincide con el paquete y el changelog publicados', () => {
+  const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
+  const packageValue = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  const changelog = readFileSync(join(root, 'CHANGELOG.md'), 'utf8');
+  assert.equal(version, packageValue.version);
+  assert.match(changelog, new RegExp(`^## ${version.replaceAll('.', '\\.')}`, 'm'));
 });
 
 test('el primer prompt clona el repo público y exige la verificación local completa', () => {

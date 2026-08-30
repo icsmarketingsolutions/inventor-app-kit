@@ -11,8 +11,9 @@ que funciona en la computadora sin Supabase, Docker ni una cuenta en la nube.
 3. **Memory Graph:** grafo interactivo de relaciones, con mouse y teclado.
 4. **Prompt Foundry:** contratos verificables para Codex o Claude en siete modos.
 5. **IA local opcional:** consola y refinador con Ollama; el resto sigue funcionando si no está instalado.
-6. **Agent Ops:** lanzamiento explícito y seguro de agentes dentro de proyectos registrados.
-7. **Generador de apps:** starter secundario Vite + React + TypeScript, con Supabase solo cuando la app lo
+6. **Voz local opcional:** grabación y transcripción offline con `whisper.cpp`, sin nube ni audio guardado.
+7. **Agent Ops:** lanzamiento explícito y seguro de agentes dentro de proyectos registrados.
+8. **Generador de apps:** starter secundario Vite + React + TypeScript, con Supabase solo cuando la app lo
    necesita.
 
 El repositorio público no contiene cuentas, credenciales, proyectos personales ni memoria privada. La
@@ -70,11 +71,12 @@ debe funcionar con tacto, mouse y teclado a 360, 768 y 1440 píxeles.
 - Supabase remoto, producción, deploy y DNS nunca se modifican sin aprobación explícita.
 - Secretos solo en `.env`; jamás en Git, memoria ni prompts.
 
-## Alcance de `v0.4.0`
+## Alcance de `v0.5.0`
 
 El Command Center, su memoria, Foundry, integración opcional con Ollama, Agent Ops y el acceso directo
-Windows están implementados. La voz local es una fase futura. Obsidian y Ollama son integraciones
-opcionales: se habilitan cuando la persona los instala, pero no bloquean el uso local del sistema.
+Windows están implementados. La voz local permite grabar, detener y transcribir offline; se instala
+una sola vez con `npm run os:voice:install`. Obsidian, Ollama y voz son integraciones opcionales: su
+ausencia no bloquea memoria, grafo ni Foundry.
 
 ## Licencia
 

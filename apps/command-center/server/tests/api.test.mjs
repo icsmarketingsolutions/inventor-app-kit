@@ -43,6 +43,25 @@ async function fixtureServer(context, options = {}) {
   return { ...fixture, server, baseUrl };
 }
 
+function pcmWav(seconds = 1) {
+  const dataBytes = Math.floor(seconds * 16_000 * 2);
+  const buffer = Buffer.alloc(44 + dataBytes);
+  buffer.write('RIFF', 0);
+  buffer.writeUInt32LE(buffer.length - 8, 4);
+  buffer.write('WAVE', 8);
+  buffer.write('fmt ', 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(16_000, 24);
+  buffer.writeUInt32LE(32_000, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write('data', 36);
+  buffer.writeUInt32LE(dataBytes, 40);
+  return buffer;
+}
+
 test('health identifica el producto sin exponer datos privados', async (context) => {
   const { baseUrl, runtime } = await fixtureServer(context);
   const result = await json(await fetch(`${baseUrl}/api/health`));
@@ -192,6 +211,78 @@ test('integra Foundry, Ollama y agentes usando solo IDs registrados', async (con
   assert.equal(result.status, 404);
 });
 
+test('integra voz raw y selector nativo solo desde el origen local exacto', async (context) => {
+  const calls = [];
+  const transcriptionClient = {
+    initialize: async () => {},
+    status: async () => ({ available: true, state: 'ready', engine: 'whisper.cpp', model: 'base', language: 'es' }),
+    transcribe: async (audio) => {
+      calls.push(audio);
+      return { transcript: 'idea hablada', durationSeconds: 1, language: 'es', model: 'base' };
+    },
+  };
+  const fixture = await fixtureServer(context, {
+    transcriptionClient,
+    folderPicker: async (path) => ({ selected: true, path: path || 'C:\\Inventos\\Proyecto uno' }),
+  });
+  let result = await json(await fetch(`${fixture.baseUrl}/api/transcription/status`));
+  assert.equal(result.value.available, true);
+  result = await json(await fetch(`${fixture.baseUrl}/api/transcription`, {
+    method: 'POST', headers: { 'content-type': 'audio/wav' }, body: pcmWav(),
+  }));
+  assert.equal(result.status, 403);
+  result = await json(await fetch(`${fixture.baseUrl}/api/transcription`, {
+    method: 'POST', headers: { 'content-type': 'application/octet-stream', origin: fixture.baseUrl }, body: pcmWav(),
+  }));
+  assert.equal(result.status, 415);
+  result = await json(await fetch(`${fixture.baseUrl}/api/transcription`, {
+    method: 'POST', headers: { 'content-type': 'audio/wav', origin: fixture.baseUrl }, body: Buffer.from('RIFF roto'),
+  }));
+  assert.equal(result.status, 422);
+  result = await json(await fetch(`${fixture.baseUrl}/api/transcription`, {
+    method: 'POST', headers: { 'content-type': 'audio/wav', origin: fixture.baseUrl }, body: pcmWav(),
+  }));
+  assert.equal(result.status, 200);
+  assert.equal(result.value.transcript, 'idea hablada');
+  assert.equal(calls.length, 1);
+  result = await json(await fetch(`${fixture.baseUrl}/api/system/select-folder`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
+  }));
+  assert.equal(result.status, 403);
+  result = await json(await fetch(`${fixture.baseUrl}/api/system/select-folder`, {
+    method: 'POST', headers: { origin: fixture.baseUrl, 'content-type': 'application/json' }, body: '{}',
+  }));
+  assert.equal(result.value.selected, true);
+  assert.equal(result.value.path, 'C:\\Inventos\\Proyecto uno');
+});
+
+test('cerrar el cliente aborta el selector pendiente', async (context) => {
+  let announceStarted;
+  const started = new Promise((resolvePromise) => { announceStarted = resolvePromise; });
+  let aborted = false;
+  const fixture = await fixtureServer(context, {
+    folderPicker: async (_path, { signal }) => new Promise((_resolve, reject) => {
+      announceStarted();
+      signal.addEventListener('abort', () => {
+        aborted = true;
+        reject(new Error('aborted by client'));
+      }, { once: true });
+    }),
+  });
+  const controller = new AbortController();
+  const pending = fetch(`${fixture.baseUrl}/api/system/select-folder`, {
+    method: 'POST',
+    headers: { origin: fixture.baseUrl, 'content-type': 'application/json' },
+    body: '{}',
+    signal: controller.signal,
+  });
+  await started;
+  controller.abort();
+  await assert.rejects(pending, (error) => error.name === 'AbortError');
+  await new Promise((resolvePromise) => setTimeout(resolvePromise, 20));
+  assert.equal(aborted, true);
+});
+
 test('sirve dist y usa index.html como fallback sin permitir salir de dist', async (context) => {
   const fixture = await withSeed();
   const dist = join(fixture.root, 'dist');
@@ -207,6 +298,7 @@ test('sirve dist y usa index.html como fallback sin permitir salir de dist', asy
   assert.match(response.headers.get('content-security-policy'), /default-src 'self'/);
   assert.equal(response.headers.get('x-frame-options'), 'DENY');
   assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+  assert.equal(response.headers.get('permissions-policy'), 'microphone=(self), camera=(), geolocation=()');
   response = await fetch(`${baseUrl}/pantalla/local`);
   assert.equal(response.status, 200);
   assert.match(await response.text(), /Inventor OS/);

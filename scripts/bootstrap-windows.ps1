@@ -2,7 +2,8 @@
 
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [switch]$Install
+    [switch]$Install,
+    [switch]$IncludeAppTooling
 )
 
 Set-StrictMode -Version Latest
@@ -55,9 +56,11 @@ function Install-WingetPackage {
 $packages = @(
     [pscustomobject]@{ Id = 'Git.Git'; Label = 'Git'; Version = $null },
     [pscustomobject]@{ Id = 'GitHub.cli'; Label = 'GitHub CLI'; Version = $null },
-    [pscustomobject]@{ Id = 'OpenJS.NodeJS.LTS'; Label = 'Node.js 24 LTS'; Version = '24.19.0' },
-    [pscustomobject]@{ Id = 'Docker.DockerDesktop'; Label = 'Docker Desktop'; Version = $null }
+    [pscustomobject]@{ Id = 'OpenJS.NodeJS.LTS'; Label = 'Node.js 24 LTS'; Version = '24.20.0' }
 )
+if ($IncludeAppTooling) {
+    $packages += [pscustomobject]@{ Id = 'Docker.DockerDesktop'; Label = 'Docker Desktop'; Version = $null }
+}
 
 Write-Host ''
 Write-Host 'Bootstrap de Windows — Inventor App Kit' -ForegroundColor White
@@ -68,7 +71,8 @@ if (-not $IsWindows) {
 }
 
 Write-Host 'Plan:' -ForegroundColor White
-Write-Host '  1. Preparar WSL 2 como motor local de Linux.'
+Write-Host '  - Preparar las herramientas mínimas para Command Center.'
+if ($IncludeAppTooling) { Write-Host '  - Preparar WSL 2 y Docker para futuras apps con Supabase.' }
 foreach ($package in $packages) {
     Write-Host ("  - Instalar {0} mediante winget ({1})." -f $package.Label, $package.Id)
 }
@@ -81,6 +85,7 @@ if (-not $Install) {
     Write-Host 'DRY-RUN: no se realizó ningún cambio.' -ForegroundColor Green
     Write-Host 'Revisá el plan. Para instalar, abrí PowerShell 7 como administrador y usá:' -ForegroundColor Yellow
     Write-Host '  pwsh -NoProfile -File ./scripts/bootstrap-windows.ps1 -Install'
+    Write-Host 'Docker/WSL son opcionales: agregá -IncludeAppTooling solo al preparar una app con Supabase.'
     exit 0
 }
 
@@ -92,7 +97,7 @@ if ($null -eq (Get-Command -Name 'winget.exe' -ErrorAction SilentlyContinue)) {
     throw 'No se encontró winget. Instalá o actualizá App Installer desde Microsoft Store y repetí.'
 }
 
-if ($PSCmdlet.ShouldProcess('WSL 2', 'Instalar componentes faltantes y fijar la versión predeterminada en 2')) {
+if ($IncludeAppTooling -and $PSCmdlet.ShouldProcess('WSL 2', 'Instalar componentes faltantes y fijar la versión predeterminada en 2')) {
     $null = & wsl.exe --status *> $null
     if ($LASTEXITCODE -ne 0) {
         Invoke-External -FilePath 'wsl.exe' -Description 'instalar WSL sin una distribución adicional' -Arguments @(
@@ -112,7 +117,8 @@ foreach ($package in $packages) {
 Write-Host ''
 Write-Host 'Instalación local terminada.' -ForegroundColor Green
 Write-Host 'Reiniciá Windows. Luego, en una consola normal, instalá Codex con el comando fijado en setup/COMPUTADORA_NUEVA.md.' -ForegroundColor Yellow
-Write-Host 'Abrí Docker Desktop y ejecutá:' -ForegroundColor Yellow
+if ($IncludeAppTooling) { Write-Host 'Abrí Docker Desktop antes de probar una app con Supabase.' -ForegroundColor Yellow }
+Write-Host 'Ejecutá:' -ForegroundColor Yellow
 Write-Host '  pwsh -NoProfile -File ./scripts/check-machine.ps1'
 Write-Host ''
 Write-Host 'Las cuentas, OAuth y MCP se configuran manualmente en setup/MCP_Y_CUENTAS.md.'

@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { MemoryGraph } from "./components/MemoryGraph";
+import { VoiceTranscriber } from "./components/VoiceTranscriber";
 import { api, capabilityUnavailable, readableError } from "./lib/api";
 import type {
   AgentActivity,
@@ -20,6 +21,7 @@ import type {
   OllamaStatus,
   Project,
   StatusResponse,
+  TranscriptionStatus,
 } from "./types";
 
 const FALLBACK_CATALOG: FoundryCatalog = {
@@ -190,6 +192,7 @@ export default function App() {
   const [activity, setActivity] = useState<AgentActivity[]>([]);
   const [activityState, setActivityState] = useState<CapabilityState>("checking");
   const [ollama, setOllama] = useState<OllamaStatus>({ state: "checking" });
+  const [voice, setVoice] = useState<TranscriptionStatus>({ state: "checking", available: false });
   const [catalog, setCatalog] = useState<FoundryCatalog>(FALLBACK_CATALOG);
   const [foundryAvailable, setFoundryAvailable] = useState<boolean | null>(null);
   const [coreLoading, setCoreLoading] = useState(true);
@@ -418,6 +421,8 @@ export default function App() {
   const [projectName, setProjectName] = useState("");
   const [projectPath, setProjectPath] = useState("");
   const [projectBusy, setProjectBusy] = useState(false);
+  const [folderPickerBusy, setFolderPickerBusy] = useState(false);
+  const folderPickerRequestRef = useRef<AbortController | null>(null);
   const [projectMessage, setProjectMessage] = useState<string | null>(null);
   useEffect(() => {
     if (!catalog.modes.some((item) => item.value === foundryMode)) setFoundryMode(catalog.modes[0]?.value ?? "plan");
@@ -487,7 +492,7 @@ export default function App() {
   };
   const addProject = async (event: FormEvent) => {
     event.preventDefault();
-    if (!projectName.trim() || !projectPath.trim() || projectBusy) return;
+    if (!projectName.trim() || !projectPath.trim() || projectBusy || folderPickerBusy) return;
     setProjectBusy(true);
     setProjectMessage(null);
     try {
@@ -501,6 +506,40 @@ export default function App() {
     } finally {
       setProjectBusy(false);
     }
+  };
+  const selectProjectFolder = async () => {
+    if (folderPickerBusy) return;
+    const controller = new AbortController();
+    folderPickerRequestRef.current = controller;
+    setFolderPickerBusy(true);
+    setProjectMessage(null);
+    try {
+      const result = await api.selectProjectFolder(projectPath.trim() || undefined, controller.signal);
+      if (folderPickerRequestRef.current !== controller || !result.selected || !result.path) return;
+      setProjectPath(result.path);
+      if (!projectName.trim()) {
+        const inferredName = result.path.replace(/[\\/]+$/, "").split(/[\\/]/).pop();
+        if (inferredName) setProjectName(inferredName);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted && folderPickerRequestRef.current === controller) {
+        setProjectMessage(readableError(error));
+      }
+    } finally {
+      if (folderPickerRequestRef.current === controller) {
+        folderPickerRequestRef.current = null;
+        setFolderPickerBusy(false);
+      }
+    }
+  };
+  const resetFolderPicker = () => {
+    folderPickerRequestRef.current?.abort();
+    folderPickerRequestRef.current = null;
+    setFolderPickerBusy(false);
+  };
+  const closeProjectDialog = () => {
+    resetFolderPicker();
+    projectDialogRef.current?.close();
   };
 
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -522,6 +561,7 @@ export default function App() {
             state={ollamaConnectedWithoutModel ? "checking" : ollama.state}
             detail={ollamaHasModel ? `Ollama ${ollama.model}` : ollamaConnectedWithoutModel ? "Ollama conectado sin modelos" : ollama.message || "Capacidad no disponible"}
           />
+          <StatusDot label="VOZ" state={voice.state} detail={voice.message || (voice.available ? "Whisper local listo" : "Motor de voz no instalado")} />
         </div>
         <Clock />
       </header>
@@ -555,6 +595,7 @@ export default function App() {
                 </span>
               </li>
               <li><span>Agent Ops</span><span className={`badge ${activityState === "ready" ? "badge--ok" : ""}`}>{activityState === "ready" ? "LISTO" : activityState === "checking" ? "…" : "NO CONECTADO"}</span></li>
+              <li><span>Voz local</span><span className={`badge ${voice.available ? "badge--ok" : "badge--warning"}`}>{voice.state === "checking" ? "…" : voice.available ? "LISTO" : "SIN MOTOR"}</span></li>
             </ul>
           </Panel>
         </aside>
@@ -593,6 +634,15 @@ export default function App() {
             </form>
           </Panel>
 
+          <Panel id="voice-transcription" title="VOICE TRANSCRIPTION" meta={voice.available ? "Whisper · offline" : "instalación opcional"}>
+            <VoiceTranscriber
+              onStatus={setVoice}
+              onUseFoundry={(text) => { setObjective((current) => current.trim() ? `${current.trimEnd()}\n\n${text}` : text); scrollTo("prompt-foundry"); }}
+              onUseConsole={(text) => { setChatInput((current) => current.trim() ? `${current.trimEnd()}\n\n${text}` : text); scrollTo("ollama-console"); }}
+              onMemorySaved={async () => { await refresh(); }}
+            />
+          </Panel>
+
           <Panel title="ACTIVITY / AGENT OPS" meta="sin datos simulados">
             <ActivityPanel activity={activity} state={activityState} error={activityError} />
           </Panel>
@@ -604,6 +654,7 @@ export default function App() {
               <button type="button" onClick={() => scrollTo("prompt-foundry")}>▸ PROMPT</button>
               <button type="button" onClick={() => scrollTo("memory-explorer")}>▸ MEMORIA</button>
               <button type="button" onClick={() => scrollTo("ollama-console")}>▸ OLLAMA</button>
+              <button type="button" onClick={() => scrollTo("voice-transcription")}>▸ VOZ</button>
               <button type="button" onClick={() => void refresh()} disabled={refreshing}>▸ REFRESH</button>
               <button type="button" onClick={() => projectDialogRef.current?.showModal()}>＋ NUEVO PROYECTO</button>
             </nav>
@@ -745,23 +796,29 @@ export default function App() {
         </div>
       </dialog>
 
-      <dialog ref={projectDialogRef} className="command-dialog command-dialog--project">
+      <dialog ref={projectDialogRef} className="command-dialog command-dialog--project" onClose={() => {
+        resetFolderPicker();
+      }}>
         <form onSubmit={addProject}>
           <div className="dialog-heading">
             <div><span>COMMAND DECK</span><h2>Registrar proyecto local</h2></div>
-            <button type="button" className="icon-button" aria-label="Cerrar nuevo proyecto" onClick={() => projectDialogRef.current?.close()}>×</button>
+            <button type="button" className="icon-button" aria-label="Cerrar nuevo proyecto" onClick={closeProjectDialog}>×</button>
           </div>
           <p className="dialog-description">El servidor guarda la ruta únicamente en la configuración local. No se envía a Internet ni aparece en respuestas públicas.</p>
           <label className="dialog-field" htmlFor="project-name">NOMBRE
             <input id="project-name" value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder="Mi nuevo invento" autoComplete="off" />
           </label>
-          <label className="dialog-field" htmlFor="project-path">CARPETA LOCAL
+          <label className="dialog-field" htmlFor="project-path">CARPETA LOCAL</label>
+          <span className="folder-picker-row">
             <input id="project-path" value={projectPath} onChange={(event) => setProjectPath(event.target.value)} placeholder="C:\Proyectos\mi-invento" autoComplete="off" />
-          </label>
+            <button type="button" onClick={() => void selectProjectFolder()} disabled={folderPickerBusy || projectBusy}>
+              {folderPickerBusy ? "ESPERANDO WINDOWS…" : "BUSCAR CARPETA…"}
+            </button>
+          </span>
           {projectMessage && <p className="inline-status inline-status--error" role="alert">{projectMessage}</p>}
           <div className="dialog-actions">
-            <button type="submit" className="button--primary" disabled={projectBusy || !projectName.trim() || !projectPath.trim()}>{projectBusy ? "REGISTRANDO…" : "REGISTRAR"}</button>
-            <button type="button" onClick={() => projectDialogRef.current?.close()}>CANCELAR</button>
+            <button type="submit" className="button--primary" disabled={folderPickerBusy || projectBusy || !projectName.trim() || !projectPath.trim()}>{projectBusy ? "REGISTRANDO…" : "REGISTRAR"}</button>
+            <button type="button" onClick={closeProjectDialog}>CANCELAR</button>
           </div>
         </form>
       </dialog>

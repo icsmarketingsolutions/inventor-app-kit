@@ -211,11 +211,11 @@ if (Test-AvailableCommand -Name 'wsl.exe') {
         Write-Check -State 'OK' -Name 'WSL' -Detail 'WSL moderno disponible. Docker debe usar el motor WSL 2.'
     }
     else {
-        Write-Check -State 'FALTA' -Name 'WSL' -Detail 'Instalá o terminá de configurar WSL 2 y reiniciá.'
+        Write-Check -State 'INFO' -Name 'WSL' -Detail 'Opcional: terminá WSL 2 antes de probar migraciones Supabase.'
     }
 }
 else {
-    Write-Check -State 'FALTA' -Name 'WSL' -Detail 'No se encontró WSL 2.'
+    Write-Check -State 'INFO' -Name 'WSL' -Detail 'Opcional para Command Center; se necesita al probar apps Supabase localmente.'
 }
 
 $dockerCommandPath = Get-DockerCommandPath
@@ -226,11 +226,11 @@ if ($null -ne $dockerCommandPath) {
         Write-Check -State 'OK' -Name 'Docker' -Detail ("Motor {0} activo; {1}" -f $dockerInfo.Output, $dockerVersion.Output)
     }
     else {
-        Write-Check -State 'FALTA' -Name 'Docker' -Detail 'La CLI existe, pero el motor no responde. Abrí Docker Desktop.'
+        Write-Check -State 'INFO' -Name 'Docker' -Detail 'Opcional: la CLI existe, pero abrí Docker Desktop antes de probar Supabase local.'
     }
 }
 else {
-    Write-Check -State 'FALTA' -Name 'Docker' -Detail 'No se encontró Docker Desktop ni su CLI por usuario.'
+    Write-Check -State 'INFO' -Name 'Docker' -Detail 'Opcional para Command Center; instalalo al comenzar una app con Supabase.'
 }
 
 if (Test-AvailableCommand -Name 'codex') {

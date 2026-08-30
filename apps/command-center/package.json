@@ -1,6 +1,6 @@
 {
   "name": "inventor-os-command-center",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -20,7 +20,9 @@
     "desktop:start": "pwsh -NoProfile -File ./scripts/desktop/start-app.ps1",
     "desktop:status": "pwsh -NoProfile -File ./scripts/desktop/status-app.ps1",
     "desktop:stop": "pwsh -NoProfile -File ./scripts/desktop/stop-app.ps1",
-    "desktop:uninstall": "pwsh -NoProfile -File ./scripts/desktop/uninstall-app.ps1"
+    "desktop:uninstall": "pwsh -NoProfile -File ./scripts/desktop/uninstall-app.ps1",
+    "voice:install": "pwsh -NoProfile -File ./scripts/voice/install-voice.ps1",
+    "voice:smoke": "pwsh -NoProfile -File ./scripts/voice/smoke-voice.ps1"
   },
   "dependencies": {
     "react": "19.2.8",

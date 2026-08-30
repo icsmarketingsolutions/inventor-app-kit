@@ -15,6 +15,7 @@ Chrome app :8421 <---------- Node API + dist      escritorio
                                +-- proyectos Git registrados
                                +-- Prompt Foundry
                                +-- Ollama loopback opcional
+                               +-- whisper.cpp local opcional
                                +-- Codex/Claude permitidos
 ```
 
@@ -48,6 +49,30 @@ confirmación explícita. Cada sesión se registra como Markdown.
 Los CLI se resuelven a una ruta absoluta desde `PATH` antes de cambiar `cwd`; un ejecutable plantado
 dentro del proyecto se rechaza.
 
+## Voz local
+
+El navegador pide el micrófono solo después de pulsar `GRABAR`, captura PCM mono y lo remuestrea a
+WAV de 16 kHz/16 bits. `POST /api/transcription` exige el Origin local exacto, un único RIFF/fmt/data,
+5 MiB y 120 segundos máximos antes de ejecutar una ruta fija de `whisper-cli` sin shell. El mutex se
+reserva antes de cualquier espera. Cancelar mata el proceso y aguarda su cierre; audio y salidas viven
+en una carpeta privada cuya eliminación se reintenta y confirma antes de responder. La transcripción
+solo se guarda en memoria cuando la persona pulsa `MEMORIA`.
+
+`npm run voice:install` descarga un release fijado de `whisper.cpp` y una revisión fija del modelo
+multilingüe `base`, verifica SHA-256, instala por staging con rollback y deja solo el runtime necesario
+fuera de Git. Antes de cada uso el servidor revalida ejecutable, DLL y modelo contra hashes embebidos.
+No hay fallback cloud; Foundry y memoria siguen funcionando si el motor falta o su integridad falla.
+
+## Selector de proyectos
+
+`BUSCAR CARPETA…` llama `POST /api/system/select-folder`, que exige Origin local exacto y reserva un
+único selector. Node ejecuta por ruta absoluta un helper PowerShell fijo, en STA y sin shell; la ruta
+inicial viaja por stdin. El helper usa `IFileOpenDialog` con `FOS_PICKFOLDERS`, encuentra la ventana
+exacta de INVENTOR O.S. y la pasa como propietaria para que el Explorador moderno aparezca delante y
+modal. Cancelar es un resultado normal. Helper y API revalidan carpeta absoluta, existente, en unidad
+local fija y sin enlaces o puntos de reanálisis en sus ancestros antes de devolverla; el campo manual
+permanece disponible.
+
 ## Escritorio
 
 El acceso directo usa VBS silencioso y PowerShell. Valida que `:8421` pertenezca a INVENTOR O.S.,
@@ -58,6 +83,8 @@ al detener. Docker y Supabase no participan.
 
 - Oxlint sin warnings, Vitest/Node tests y build TypeScript.
 - API loopback con Host/Origin de mismo origen, CSP, JSON y límites estrictos.
+- Micrófono permitido solo al mismo origen; audio raw WAV, origen obligatorio y proceso cancelable.
+- Selector nativo con proceso único, propietario explícito, stdin privado y sin comandos construidos.
 - Notas externas mayores de 2 MiB se listan como sobredimensionadas, pero no se cargan en búsqueda,
   grafo o editor.
 - Sin shell arbitrario, SSRF, rutas absolutas en errores ni secretos en logs.
