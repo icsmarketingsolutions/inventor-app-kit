@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { clamp, createGraphLayout, stepGraph, type PositionedNode } from "../lib/graph";
+import { createPortal } from "react-dom";
+import { clamp, createGraphLayout, stepGraph, filterGraph, type PositionedNode } from "../lib/graph";
 import type { GraphResponse } from "../types";
 
 interface MemoryGraphProps {
@@ -50,7 +51,14 @@ function nodeColor(node: PositionedNode): string {
   return COLORS[node.folder] ?? "#e8a33d";
 }
 
-export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: MemoryGraphProps) {
+export function MemoryGraph({ graph: sourceGraph, loading, error, onOpenNote, onRetry }: MemoryGraphProps) {
+  const [query, setQuery] = useState("");
+  const [folder, setFolder] = useState("");
+  const graph = useMemo(() => filterGraph(sourceGraph, query, folder), [sourceGraph, query, folder]);
+  const folders = useMemo(() => [...new Set(sourceGraph?.nodes.map((node) => node.folder) ?? [])].sort(), [sourceGraph]);
+  const [expanded, setExpanded] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const expandButtonRef = useRef<HTMLButtonElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<PositionedNode[]>([]);
   const viewportRef = useRef<Viewport>({ width: 800, height: 360, scale: 1, offsetX: 0, offsetY: 0 });
@@ -64,6 +72,23 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     [],
   );
+  const [paused, setPaused] = useState(reduceMotion);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const preventScroll = (event: WheelEvent) => event.preventDefault();
+    canvas?.addEventListener("wheel", preventScroll, { passive: false });
+    return () => canvas?.removeEventListener("wheel", preventScroll);
+  }, [expanded]);
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setPaused(preference.matches);
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (expanded) dialogRef.current?.showModal();
+    else if (dialogRef.current?.open) dialogRef.current.close();
+  }, [expanded]);
 
   const fit = useCallback(() => {
     const nodes = nodesRef.current;
@@ -86,14 +111,14 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
     const context = canvas.getContext("2d");
     if (!context) return;
     const viewport = viewportRef.current;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, viewport.width, viewport.height);
     context.translate(viewport.offsetX, viewport.offsetY);
     context.scale(viewport.scale, viewport.scale);
 
     const byId = new Map(nodesRef.current.map((node) => [node.id, node]));
-    const hoveredIdNow = hoveredIdRef.current;
+    const hoveredIdNow = hoveredIdRef.current ?? nodesRef.current[selectedIndexRef.current]?.id;
     const hovered = hoveredIdNow ? byId.get(hoveredIdNow) : null;
     context.lineWidth = 1 / viewport.scale;
     for (const edge of graph.edges) {
@@ -101,7 +126,7 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
       const target = byId.get(edge.target);
       if (!source || !target) continue;
       const active = hovered && (source.id === hovered.id || target.id === hovered.id);
-      context.strokeStyle = active ? "#e8a33dcc" : hovered ? "#3d34232d" : "#3d34238c";
+      context.strokeStyle = active ? "#f1bb69cc" : hovered ? "#76674c33" : "#8c79564d";
       context.beginPath();
       context.moveTo(source.x, source.y);
       context.lineTo(target.x, target.y);
@@ -109,6 +134,7 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
     }
 
     const selectedId = nodesRef.current[selectedIndexRef.current]?.id;
+    const occupied: Array<{x: number; y: number; width: number}> = [];
     for (const node of nodesRef.current) {
       const color = nodeColor(node);
       const related = !hovered || node.id === hovered.id || hovered.neighbors.has(node.id);
@@ -128,11 +154,16 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
         context.arc(node.x, node.y, radius + 4, 0, Math.PI * 2);
         context.stroke();
       }
-      if (node.id === hoveredIdNow || node.id === selectedId || (!hovered && node.degree >= 2)) {
+      if (node.id === hoveredIdNow || node.id === selectedId || (related && node.degree >= 2)) {
         context.fillStyle = node.id === hoveredIdNow ? "#ffc46b" : "#a99a78";
         context.font = `${node.id === hoveredIdNow ? "700 " : ""}${9.5 / viewport.scale}px monospace`;
         const label = node.label.length > 28 ? `${node.label.slice(0, 27)}…` : node.label;
-        context.fillText(label, node.x + radius + 5, node.y + 3);
+        const x = node.x + radius + 5, y = node.y + 3;
+        const width = context.measureText(label).width;
+        if (node.id === selectedId || !occupied.some((box) => x < box.x + box.width && x + width > box.x && Math.abs(y - box.y) < 14 / viewport.scale)) {
+          occupied.push({x, y, width});
+          context.fillText(label, x, y);
+        }
       }
     }
     context.globalAlpha = 1;
@@ -152,15 +183,19 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
     const canvas = canvasRef.current;
     if (!canvas) return;
     const resize = () => {
-      const width = Math.max(280, canvas.clientWidth);
+      const width = Math.max(1, canvas.clientWidth);
       const height = Math.max(280, canvas.clientHeight || 380);
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       viewportRef.current.width = width;
       viewportRef.current.height = height;
       if (graph) {
-        nodesRef.current = createGraphLayout(graph.nodes, graph.edges, width, height);
+        const previous = new Map(nodesRef.current.map((node) => [node.id, node]));
+        nodesRef.current = createGraphLayout(graph.nodes, graph.edges, width, height).map((node) => {
+          const old = previous.get(node.id);
+          return old ? { ...node, x: old.x, y: old.y, anchorX: old.anchorX, anchorY: old.anchorY } : node;
+        });
         heatRef.current = 1;
         setSelectedIndex((current) => {
           const next = clamp(current, 0, Math.max(0, graph.nodes.length - 1));
@@ -175,28 +210,29 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
     observer.observe(canvas);
     resize();
     return () => observer.disconnect();
-  }, [draw, fit, graph]);
+  }, [draw, fit, graph, expanded]);
 
   useEffect(() => {
     if (!graph || nodesRef.current.length === 0) return;
     let frame = 0;
-    if (reduceMotion) {
-      for (let step = 0; step < 22; step += 1) stepGraph(nodesRef.current, graph.edges, 0.55, null);
-      fit();
+    if (paused) {
       draw();
       return;
     }
     const animate = () => {
+      if (document.hidden) { frame = 0; return; }
       if (heatRef.current >= 0.018) {
         stepGraph(nodesRef.current, graph.edges, heatRef.current, pointerRef.current?.nodeId ?? null);
-        heatRef.current *= 0.988;
+        heatRef.current *= 0.97;
       }
       draw();
-      frame = window.requestAnimationFrame(animate);
+      frame = heatRef.current >= 0.018 ? window.requestAnimationFrame(animate) : 0;
     };
     frame = window.requestAnimationFrame(animate);
-    return () => window.cancelAnimationFrame(frame);
-  }, [draw, fit, graph, reduceMotion]);
+    const wake = () => { if (!document.hidden && !frame) frame = window.requestAnimationFrame(animate); };
+    document.addEventListener("visibilitychange", wake);
+    return () => { window.cancelAnimationFrame(frame); document.removeEventListener("visibilitychange", wake); };
+  }, [draw, fit, graph, paused, expanded]);
 
   const worldPoint = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -270,15 +306,10 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
   const releasePointer = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const pointer = pointerRef.current;
     if (!pointer || pointer.id !== event.pointerId) return;
-    const node = pointer.nodeId
-      ? nodesRef.current.find((candidate) => candidate.id === pointer.nodeId)
-      : null;
     pointerRef.current = null;
-    if (node && !pointer.moved && !node.unresolved) onOpenNote(node.path);
   };
 
   const onWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
-    event.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const bounds = canvas.getBoundingClientRect();
@@ -313,8 +344,18 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
   };
 
   const selected = graph?.nodes[selectedIndex];
-  return (
+  const neighbors = sourceGraph?.nodes.filter((node) => sourceGraph.edges.some((edge) =>
+    (edge.source === selected?.id && edge.target === node.id) || (edge.target === selected?.id && edge.source === node.id))) ?? [];
+  const content = (
     <div className="graph-shell">
+      <div className="atlas-toolbar">
+        <input type="search" aria-label="Buscar en el mapa" placeholder="Buscar una idea, proyecto o nota…" value={query} onChange={(event) => setQuery(event.target.value)} />
+        <select aria-label="Filtrar carpeta del mapa" value={folder} onChange={(event) => setFolder(event.target.value)}><option value="">Todas las carpetas</option>{folders.map((name) => <option key={name} value={name}>{name}</option>)}</select>
+        <button type="button" onClick={() => { fit(); draw(); }} title="Encuadrar mapa" aria-label="Encuadrar mapa">⤢</button>
+        {(query || folder) && <button type="button" onClick={() => { setQuery(""); setFolder(""); }}>Limpiar filtros</button>}
+        <button type="button" onClick={() => { heatRef.current = 0.4; setPaused((value) => !value); }} aria-pressed={paused}>{paused ? "Reanudar" : "Pausar"}</button>
+        <button type="button" ref={expandButtonRef} onClick={() => setExpanded((value) => !value)}>{expanded ? "Cerrar mapa ampliado" : "Ampliar mapa"}</button>
+      </div>
       {loading && <p className="panel-state">Leyendo wikilinks locales…</p>}
       {error && !loading && (
         <div className="panel-state panel-state--error" role="alert">
@@ -323,7 +364,7 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
         </div>
       )}
       {!loading && !error && graph?.nodes.length === 0 && (
-        <p className="panel-state">El vault todavía no tiene nodos enlazados.</p>
+        <p className="panel-state">{sourceGraph?.nodes.length ? "Sin coincidencias. Probá otra búsqueda o carpeta." : "El vault todavía no tiene nodos enlazados."}</p>
       )}
       <canvas
         ref={canvasRef}
@@ -336,16 +377,31 @@ export function MemoryGraph({ graph, loading, error, onOpenNote, onRetry }: Memo
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={releasePointer}
-        onPointerCancel={releasePointer}
+        onPointerCancel={() => { pointerRef.current = null; }}
+        onLostPointerCapture={() => { pointerRef.current = null; }}
         onPointerLeave={() => { if (!pointerRef.current) setHoveredId(null); }}
         onWheel={onWheel}
         onKeyDown={onKeyDown}
       />
       {!loading && !error && Boolean(graph?.nodes.length) && (
         <div className="graph-help" aria-hidden="true">
-          ARRASTRÁ · RUEDA = ZOOM · DOBLE CLICK = ENCUADRAR
+          {graph?.nodes.length} / {sourceGraph?.nodes.length} notas · {graph?.edges.length} conexiones · arrastrá y usá la rueda para zoom
         </div>
       )}
+      {selected && !loading && !error && <div className="atlas-detail">
+        <strong>{selected.label}</strong><p>{selected.folder} · {neighbors.length} conexiones</p>
+        {!selected.unresolved ? <button type="button" onClick={() => onOpenNote(selected.path)}>Abrir nota ↗</button> : <p>Esta nota todavía no existe.</p>}
+        <div className="atlas-results">{neighbors.map((node) => <button type="button" key={node.id} onClick={() => {
+          setQuery(""); setFolder(""); setSelectedIndex(sourceGraph?.nodes.findIndex((item) => item.id === node.id) ?? 0);
+        }}>{node.label}</button>)}</div>
+      </div>}
+      {!loading && !error && <div className="atlas-results" aria-label="Resultados del mapa">{graph?.nodes.slice(0, 40).map((node, index) => <button type="button" key={node.id} onClick={() => {
+        setSelectedIndex(index);
+        const point = nodesRef.current.find((item) => item.id === node.id);
+        if (point) { const view = viewportRef.current; view.offsetX = view.width / 2 - point.x * view.scale; view.offsetY = view.height / 2 - point.y * view.scale; }
+        draw();
+      }}>{node.label}</button>)}{(graph?.nodes.length ?? 0) > 40 && <small>Primeras 40 notas. Buscá o filtrá para afinar.</small>}</div>}
     </div>
   );
+  return <><dialog ref={dialogRef} className="atlas-dialog" aria-label="Atlas ampliado" onClose={() => { setExpanded(false); requestAnimationFrame(() => expandButtonRef.current?.focus()); }} />{expanded && dialogRef.current ? createPortal(content, dialogRef.current) : content}</>;
 }

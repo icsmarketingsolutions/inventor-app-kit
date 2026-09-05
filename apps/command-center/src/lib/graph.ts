@@ -1,4 +1,13 @@
-import type { GraphEdge, GraphNode } from "../types";
+import type { GraphEdge, GraphNode, GraphResponse } from "../types";
+
+export function filterGraph(graph: GraphResponse | null, query: string, folder: string): GraphResponse | null {
+  if (!graph) return null;
+  const text = query.trim().toLocaleLowerCase("es");
+  const nodes = graph.nodes.filter((node) => (!folder || node.folder === folder)
+    && (!text || node.label.toLocaleLowerCase("es").includes(text) || node.path.toLocaleLowerCase("es").includes(text)));
+  const ids = new Set(nodes.map((node) => node.id));
+  return { nodes, edges: graph.edges.filter((edge) => ids.has(edge.source) && ids.has(edge.target)) };
+}
 
 export interface PositionedNode extends GraphNode {
   x: number;

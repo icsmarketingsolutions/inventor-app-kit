@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createAgentOps } from '../features/agent-ops.mjs';
+import { createMissionStore } from '../features/missions.mjs';
 import { createNativeFolderPicker } from '../features/native-folder-picker.mjs';
 import { OllamaError, createOllamaClient } from '../features/ollama.mjs';
 import { forgePrompt, listFoundryCatalog } from '../features/prompt-foundry.mjs';
@@ -217,6 +218,10 @@ async function handleApi(request, response, url, context) {
     sendJson(response, 200, await listFoundryCatalog({ foundryRoot: context.foundryRoot }), headers);
     return;
   }
+  if (request.method === 'GET' && url.pathname === '/api/foundry/mission') {
+    sendJson(response, 200, await context.missions.read(url.searchParams.get('id')), headers);
+    return;
+  }
   if (request.method === 'GET' && url.pathname === '/api/ollama/status') {
     sendJson(response, 200, await context.ollama.health(), headers);
     return;
@@ -309,7 +314,10 @@ async function handleApi(request, response, url, context) {
         baseDirectory: context.repositoryRoot,
         foundryRoot: context.foundryRoot,
       });
-      sendJson(response, 200, { prompt }, headers);
+      if (input.workflow !== undefined) {
+        const mission = await context.missions.create({ contract: prompt, tool: input.tool, workflow: input.workflow, projectIds: input.projectIds });
+        sendJson(response, 200, { prompt: mission.prompts.orchestrator, mission }, headers);
+      } else sendJson(response, 200, { prompt }, headers);
     } catch (error) {
       if (error instanceof AppError) throw error;
       if (error instanceof TypeError || error instanceof RangeError) {
@@ -342,12 +350,16 @@ async function handleApi(request, response, url, context) {
   if (url.pathname === '/api/agents/launch') {
     const config = await readConfig(context.configPath);
     registeredProjects(config.projects, input.projectIds, 8);
+    const missionDirectory = input.missionId
+      ? await context.missions.launchDirectory(input.missionId, input.tool, input.projectIds) : undefined;
     const launched = await context.agentOps.launch({
       tool: input.tool,
       projectIds: input.projectIds,
       prompt: input.prompt,
       confirm: input.confirm,
       registeredProjects: config.projects,
+      model: input.model,
+      missionDirectory,
     });
     sendJson(response, 202, launched, headers);
     return;
@@ -364,6 +376,7 @@ export async function createCommandCenterServer(options = {}) {
   const context = await initializeRuntime({ runtimeRoot, seedRoot });
   context.repositoryRoot = repositoryRoot;
   context.foundryRoot = resolve(options.foundryRoot || join(repositoryRoot, 'foundry'));
+  context.missions = createMissionStore({ runtimeRoot: context.runtimeRoot, foundryRoot: context.foundryRoot });
   context.ollama = options.ollamaClient || createOllamaClient({
     baseUrl: options.ollamaUrl || process.env.OLLAMA_HOST || undefined,
     timeoutMs: options.ollamaTimeoutMs || 20_000,

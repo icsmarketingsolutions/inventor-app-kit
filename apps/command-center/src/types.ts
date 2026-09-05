@@ -103,3 +103,16 @@ export interface FoundryCatalog {
   modes: FoundryCatalogItem[];
   agents: FoundryCatalogItem[];
 }
+
+export type MissionRole = "orchestrator" | "builder" | "researcher";
+export interface Mission {
+  id: string;
+  tool: string;
+  workflow: "single" | "team";
+  projectIds: string[];
+  profiles: Record<MissionRole, { label: string; model: string }>;
+  prompts: Record<MissionRole, string>;
+  state: string;
+  assignments: string;
+  deliveries: Record<MissionRole, string>;
+}

@@ -17,6 +17,7 @@ import {
 import { delimiter, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { AppError } from '../core/errors.mjs';
 import { assertNoLinks } from '../core/security.mjs';
+import { validateModel } from './missions.mjs';
 
 const MAX_PROMPT_CHARS = 200_000;
 const MAX_PROJECTS_PER_LAUNCH = 8;
@@ -247,7 +248,7 @@ export function createAgentOps({
     await atomicSessionWrite(reportPath, markdownForSession(session));
   }
 
-  async function startOne({ commandPath, definition, project, prompt, tool }) {
+  async function startOne({ commandPath, definition, project, prompt, tool, model, missionDirectory, projects }) {
     const startedAt = now();
     if (!(startedAt instanceof Date) || Number.isNaN(startedAt.valueOf())) {
       throw new TypeError('now debe devolver una fecha válida');
@@ -288,11 +289,19 @@ export function createAgentOps({
 
     let child;
     try {
-      child = spawnImpl(commandPath, [...definition.args], {
+      const args = [...definition.args];
+      if (model) args.push('--model', model);
+      if (missionDirectory) {
+        args.push('--add-dir', missionDirectory);
+        for (const extra of projects.slice(1)) args.push('--add-dir', extra.path);
+      }
+      child = spawnImpl(commandPath, args, {
         cwd: project.path,
         shell: false,
         windowsHide: true,
         stdio: ['pipe', 'ignore', 'ignore'],
+        ...(missionDirectory ? { env: { ...process.env, INVENTOR_MISSION_DIR: missionDirectory,
+          INVENTOR_PROJECT_DIRS: JSON.stringify(projects.map(({ id, path }) => ({ id, path }))) } } : {}),
       });
       if (!child || typeof child.once !== 'function' || typeof child.stdin?.end !== 'function') {
         throw new TypeError('spawnImpl no devolvió un proceso compatible');
@@ -352,11 +361,14 @@ export function createAgentOps({
     prompt,
     confirm,
     registeredProjects,
+    model = '',
+    missionDirectory,
   } = {}) {
     if (confirm !== true) {
       throw new AppError(409, 'AGENT_CONFIRMATION_REQUIRED', 'Confirmá explícitamente el lanzamiento del agente.');
     }
     const definition = validateTool(tool, commands);
+    const selectedModel = validateModel(model);
     const cleanPrompt = validatePrompt(prompt);
     const projects = await selectedRegisteredProjects(registeredProjects, projectIds);
     let commandPath;
@@ -373,8 +385,8 @@ export function createAgentOps({
     }
     const sessions = [];
     try {
-      for (const project of projects) {
-        sessions.push(await startOne({ commandPath, definition, project, prompt: cleanPrompt, tool }));
+      for (const project of missionDirectory ? projects.slice(0, 1) : projects) {
+        sessions.push(await startOne({ commandPath, definition, project, prompt: cleanPrompt, tool, model: selectedModel, missionDirectory, projects }));
       }
     } catch (error) {
       const started = sessions.map((session) => active.get(session.id)).filter(Boolean);

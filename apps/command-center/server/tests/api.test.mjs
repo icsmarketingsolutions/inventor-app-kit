@@ -204,6 +204,28 @@ test('integra Foundry, Ollama y agentes usando solo IDs registrados', async (con
   assert.equal(result.status, 202);
   assert.equal(calls.launch[0].registeredProjects[0].path, await realpath(project));
   assert.equal(Object.hasOwn(calls.launch[0], 'path'), false);
+  const missionResponse = await json(await fetch(`${fixture.baseUrl}/api/foundry/forge`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ mode: 'plan', objective: 'Coordinar', tool: 'codex', projectIds: [projectId], workflow: 'team' }),
+  }));
+  assert.equal(missionResponse.status, 200);
+  const missionId = missionResponse.value.mission.id;
+  const recovered = await json(await fetch(`${fixture.baseUrl}/api/foundry/mission?id=${missionId}`));
+  assert.equal(recovered.value.profiles.researcher.model, 'gpt-5.6-terra');
+  const launchedMission = await json(await fetch(`${fixture.baseUrl}/api/agents/launch`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ tool: 'codex', projectIds: [projectId], prompt: missionResponse.value.prompt,
+      confirm: true, model: 'gpt-6-astra', missionId, missionDirectory: 'untrusted' }),
+  }));
+  assert.equal(launchedMission.status, 202);
+  assert.equal(calls.launch[1].model, 'gpt-6-astra');
+  assert.equal(await realpath(calls.launch[1].missionDirectory), join(await realpath(fixture.runtime), 'missions', missionId));
+  const mismatch = await json(await fetch(`${fixture.baseUrl}/api/agents/launch`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ tool: 'claude', projectIds: [projectId], prompt: 'x', confirm: true, missionId }),
+  }));
+  assert.equal(mismatch.status, 400);
+  assert.equal(calls.launch.length, 2);
   result = await json(await fetch(`${fixture.baseUrl}/api/foundry/forge`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ mode: 'plan', objective: 'x', tool: 'codex', projectIds: ['no-registrado'] }),

@@ -1,5 +1,15 @@
 # INVENTOR O.S. Command Center
 
+Memory Atlas incorpora búsqueda, filtros, conexiones navegables, zoom, pausa y vista ampliada.
+El cockpit añade profundidad, transiciones y foco visible, con soporte para movimiento reducido.
+
+En Prompt Foundry elegí **Una sesión** o **Equipo**, seleccioná proyectos y forjá el contrato.
+En equipo podés revisar e iniciar los prompts de orquestador, constructor e investigador y consultar
+su bandeja de encargos y entregas. Cada lanzamiento requiere la confirmación de la vista previa.
+Los modelos son preferencias editables: Astra/Sol/Terra o Fable 5.1/Opus/Sonnet. Para Fable indicá el
+ID disponible en tu proveedor; vacío conserva el predeterminado. La bandeja persiste localmente y
+no despierta sesiones inactivas; la mensajería automática depende de las herramientas del agente.
+
 Centro local para memoria Obsidian, grafo de wikilinks, proyectos Git, Prompt Foundry, voz, Ollama y
 agentes. Funciona sin Supabase y sin Docker.
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GraphEdge, GraphNode } from "../types";
-import { clamp, createGraphLayout, stepGraph } from "./graph";
+import { clamp, createGraphLayout, stepGraph, filterGraph } from "./graph";
 
 const nodes: GraphNode[] = [
   { id: "a", path: "10-projects/a.md", label: "A", folder: "10-projects", unresolved: false },
@@ -9,6 +9,14 @@ const nodes: GraphNode[] = [
 const edges: GraphEdge[] = [{ source: "a", target: "b" }];
 
 describe("grafo de memoria", () => {
+  it("filtra sin enlaces huérfanos y conserva el grafo original", () => {
+    const graph = { nodes, edges };
+    expect(filterGraph(graph, "  A  ", "10-projects")).toEqual({ nodes: [nodes[0]], edges: [] });
+    expect(filterGraph(graph, "", "")).toEqual(graph);
+    expect(filterGraph(graph, "ausente", "")).toEqual({ nodes: [], edges: [] });
+    expect(filterGraph(null, "", "")).toBeNull();
+    expect(graph.edges).toHaveLength(1);
+  });
   it("produce un layout determinista y calcula vecinos", () => {
     const first = createGraphLayout(nodes, edges, 800, 360);
     const second = createGraphLayout(nodes, edges, 800, 360);

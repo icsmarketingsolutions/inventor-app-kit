@@ -8,6 +8,23 @@ import { createAgentOps, resolveAgentCommand } from '../features/agent-ops.mjs';
 
 const trustedResolver = async () => process.execPath;
 
+test('misión inicia un coordinador con modelo y acceso a todos sus proyectos', async (context) => {
+  const data = await fixture(context);
+  const calls = [];
+  const second = join(data.root, 'second');
+  await mkdir(second);
+  const projects = [...data.projects, { id: 'second', name: 'Segundo', path: second }];
+  const ops = createAgentOps({ memoryRoot: data.memoryRoot, spawnImpl: fakeSpawner(calls), resolveCommand: trustedResolver });
+  await ops.launch({ tool: 'codex', projectIds: ['project-1', 'second'], prompt: 'Contrato', confirm: true,
+    registeredProjects: projects, model: 'gpt-6-astra', missionDirectory: data.root });
+  assert.equal(calls.length, 1);
+  assert.ok(calls[0].args.includes('gpt-6-astra'));
+  assert.ok(calls[0].args.includes(await realpath(second)));
+  assert.equal(calls[0].options.env.INVENTOR_MISSION_DIR, data.root);
+  assert.equal(JSON.parse(calls[0].options.env.INVENTOR_PROJECT_DIRS).length, 2);
+  assert.equal(calls[0].options.shell, false);
+});
+
 async function fixture(context) {
   const root = await mkdtemp(join(tmpdir(), 'inventor-feature-agents-'));
   const memoryRoot = join(root, 'vault');

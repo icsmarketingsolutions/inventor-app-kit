@@ -49,6 +49,25 @@ confirmación explícita. Cada sesión se registra como Markdown.
 Los CLI se resuelven a una ruta absoluta desde `PATH` antes de cambiar `cwd`; un ejecutable plantado
 dentro del proyecto se rechaza.
 
+## Misiones y Atlas
+
+`server/features/missions.mjs` crea una bandeja privada en `INVENTOR_OS_HOME/missions/<uuid>`.
+`foundry/team.md` añade roles, revisiones, auditoría, recuperación de contexto y límites del contrato.
+Foundry admite sesión única o equipo: Astra/Sol/Terra y Fable 5.1/Opus/Sonnet son preferencias editables.
+Fable conserva el modelo configurado hasta que se indique un identificador disponible.
+La API devuelve prompts por rol y entregas sin directorios absolutos. La última misión se recupera
+por ID en el navegador. No se mezcla con notas, búsqueda ni grafo.
+
+El lanzamiento congela proveedor y proyectos del contrato revisado; una misión inicia un proceso
+con acceso a los proyectos registrados y a su bandeja mediante `--add-dir`. Modelo validado como
+argumento separado; directorio resuelto por el servidor. `INVENTOR_MISSION_DIR` y
+`INVENTOR_PROJECT_DIRS` proporcionan contexto al proceso. El orquestador usa mensajería nativa si
+existe, o archivos por rol; estos archivos no despiertan sesiones ni prueban que estén conectadas.
+
+Memory Atlas filtra notas y enlaces, muestra vecinos y una lista navegable, permite arrastrar, zoom,
+encuadrar, pausar y ampliar en diálogo. Abrir una nota es una acción explícita. El lienzo duerme al
+estabilizarse y respeta movimiento reducido; teclado y resultados ofrecen acceso alternativo.
+
 ## Voz local
 
 El navegador pide el micrófono solo después de pulsar `GRABAR`, captura PCM mono y lo remuestrea a

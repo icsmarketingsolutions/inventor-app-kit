@@ -10,6 +10,7 @@ import type {
   StatusResponse,
   TranscriptionStatus,
   NativeFolderSelection,
+  Mission,
 } from "../types";
 
 interface ApiErrorBody {
@@ -155,7 +156,9 @@ export const api = {
     mode: string;
     objective: string;
     tool: string;
-  }) => await post<{ prompt: string }>("/api/foundry/forge", payload),
+    workflow?: "single" | "team";
+  }) => await post<{ prompt: string; mission?: Mission }>("/api/foundry/forge", payload),
+  mission: (id: string) => request<Mission>(`/api/foundry/mission?id=${encodeURIComponent(id)}`),
   refineObjective: async (payload: {
     objective: string;
     model: string;
@@ -165,6 +168,8 @@ export const api = {
     tool: string;
     prompt: string;
     confirm: true;
+    model?: string;
+    missionId?: string;
   }) => await post<{ ok: true }>("/api/agents/launch", payload),
   activity: async () =>
     (await request<{ activity: AgentActivity[] }>("/api/agents/activity")).activity,

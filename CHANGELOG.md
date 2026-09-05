@@ -1,5 +1,15 @@
 # Changelog
 
+## Sin publicar — 2026-09-04
+
+- INVENTOR O.S. incorpora Memory Atlas: búsqueda, carpetas, conexiones, apertura explícita,
+  zoom, pausa, teclado y vista ampliada; lienzo en reposo cuando se estabiliza.
+- Cockpit con paneles, transiciones, foco visible y movimiento reducido.
+- Foundry admite sesión única o equipo con roles Astra/Sol/Terra y Fable 5.1/Opus/Sonnet editables.
+- Misiones privadas persistentes con encargos, entregas por rol, revisiones y auditoría iterativa.
+- El lanzamiento conserva el alcance revisado, valida modelo y resuelve la bandeja en el servidor;
+  la mensajería nativa depende del entorno y los archivos no despiertan sesiones.
+
 ## 0.5.0 — 2026-08-29
 
 - `VOICE TRANSCRIPTION` graba desde un gesto explícito, convierte a WAV PCM mono 16 kHz y transcribe

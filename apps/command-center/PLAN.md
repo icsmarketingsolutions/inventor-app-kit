@@ -16,6 +16,8 @@ paridad funcional y visual respecto a V.A.U.L.T., sin copiar datos privados ni e
 - [x] F6 — voz local opcional: grabar, detener, transcribir offline y reutilizar el texto.
 - [ ] F6.1 — dictado incremental con ventanas, VAD y reconciliación de solapamiento.
 - [ ] F7 — presets futuros de apps locales o con Supabase.
+- [x] Paridad Command Center — Atlas con filtros, vecinos, pausa y expansión; cockpit animado.
+- [x] Foundry de misiones — sesión única/equipo, roles, bandeja privada y lanzamiento con contexto fijo.
 
 Cada fase marcada tiene pruebas automatizadas y su flujo determinista verificado en vivo. Las
 integraciones externas opcionales se reportan por separado cuando la herramienta no está instalada.

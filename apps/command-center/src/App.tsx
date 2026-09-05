@@ -22,6 +22,8 @@ import type {
   Project,
   StatusResponse,
   TranscriptionStatus,
+  Mission,
+  MissionRole,
 } from "./types";
 
 const FALLBACK_CATALOG: FoundryCatalog = {
@@ -416,6 +418,14 @@ export default function App() {
   const [foundryBusy, setFoundryBusy] = useState(false);
   const [foundryMessage, setFoundryMessage] = useState<string | null>(null);
   const [forgedPrompt, setForgedPrompt] = useState("");
+  const [workflow, setWorkflow] = useState<"single" | "team">("single");
+  const [mission, setMission] = useState<Mission | null>(null);
+  const [launchContext, setLaunchContext] = useState<{ projectIds: string[]; tool: string; missionId?: string }>({ projectIds: [], tool: "codex" });
+  const [launchModel, setLaunchModel] = useState("");
+  const [launchBusy, setLaunchBusy] = useState(false);
+  const launchGuard = useRef(false);
+  const [deliveryText, setDeliveryText] = useState<string | null>(null);
+  const deliveryDialogRef = useRef<HTMLDialogElement>(null);
   const promptDialogRef = useRef<HTMLDialogElement>(null);
   const projectDialogRef = useRef<HTMLDialogElement>(null);
   const [projectName, setProjectName] = useState("");
@@ -424,6 +434,31 @@ export default function App() {
   const [folderPickerBusy, setFolderPickerBusy] = useState(false);
   const folderPickerRequestRef = useRef<AbortController | null>(null);
   const [projectMessage, setProjectMessage] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    try {
+      const id = localStorage.getItem("inventor-mission-id");
+      if (id) void api.mission(id).then((saved) => { if (!cancelled) setMission((current) => current ?? saved); }).catch(() => {});
+    } catch { /* Memoria del navegador opcional. */ }
+    return () => { cancelled = true; };
+  }, []);
+  const openMissionRole = (value: Mission, role: MissionRole) => {
+    setForgedPrompt(value.prompts[role]);
+    setLaunchContext({ projectIds: value.projectIds, tool: value.tool, missionId: value.id });
+    setLaunchModel(value.profiles[role].model);
+    promptDialogRef.current?.showModal();
+  };
+  const readDeliveries = async () => {
+    if (!mission || foundryBusy) return;
+    setFoundryBusy(true);
+    try {
+      const current = await api.mission(mission.id);
+      setMission(current);
+      setDeliveryText([current.state, current.assignments, ...Object.values(current.deliveries)].join("\n\n────────────────────\n\n"));
+      deliveryDialogRef.current?.showModal();
+    } catch (error) { setFoundryMessage(readableError(error)); }
+    finally { setFoundryBusy(false); }
+  };
   useEffect(() => {
     if (!catalog.modes.some((item) => item.value === foundryMode)) setFoundryMode(catalog.modes[0]?.value ?? "plan");
     if (!catalog.agents.some((item) => item.value === foundryAgent)) setFoundryAgent(catalog.agents[0]?.value ?? "codex");
@@ -437,9 +472,15 @@ export default function App() {
     setFoundryMessage("Forjando con contexto local…");
     try {
       const result = await api.forgePrompt({
-        projectIds: selectedProjects, mode: foundryMode, objective: objective.trim(), tool: foundryAgent,
+        projectIds: selectedProjects, mode: foundryMode, objective: objective.trim(), tool: foundryAgent, workflow,
       });
       setForgedPrompt(result.prompt);
+      setLaunchContext({ projectIds: [...selectedProjects], tool: foundryAgent, missionId: result.mission?.id });
+      setLaunchModel(result.mission?.profiles.orchestrator.model ?? "");
+      if (result.mission) {
+        setMission(result.mission);
+        try { localStorage.setItem("inventor-mission-id", result.mission.id); } catch { /* opcional */ }
+      }
       setFoundryAvailable(true);
       setFoundryMessage("Prompt listo para copiar o lanzar.");
       promptDialogRef.current?.showModal();
@@ -480,15 +521,17 @@ export default function App() {
     }
   };
   const launchAgent = async () => {
+    if (launchGuard.current) return;
+    launchGuard.current = true; setLaunchBusy(true);
     try {
-      await api.launchAgent({ projectIds: selectedProjects, tool: foundryAgent, prompt: forgedPrompt, confirm: true });
+      await api.launchAgent({ ...launchContext, model: launchModel.trim(), prompt: forgedPrompt, confirm: true });
       setFoundryMessage("Agente lanzado en los proyectos seleccionados.");
       promptDialogRef.current?.close();
     } catch (error) {
       setFoundryMessage(capabilityUnavailable(error)
         ? "El puente de agentes todavía no está conectado. Copiar sigue disponible."
         : readableError(error));
-    }
+    } finally { launchGuard.current = false; setLaunchBusy(false); }
   };
   const addProject = async (event: FormEvent) => {
     event.preventDefault();
@@ -601,7 +644,7 @@ export default function App() {
         </aside>
 
         <div className="dashboard-column dashboard-column--center">
-          <Panel id="memory-graph" title="MEMORY GRAPH" meta="wikilinks locales · interactivo" className="graph-panel">
+          <Panel id="memory-graph" title="MEMORY ATLAS" meta="explorá · conectá · descubrí" className="graph-panel">
             <MemoryGraph graph={graph} loading={graphLoading} error={graphError} onOpenNote={openNote} onRetry={refreshGraph} />
             <div className="primary-directive">
               <span>PRIMARY DIRECTIVE</span>
@@ -693,6 +736,17 @@ export default function App() {
               <label>OBJETIVO
                 <textarea value={objective} onChange={(event) => setObjective(event.target.value)} placeholder="Qué querés lograr, cómo sabremos que quedó bien y qué no debe tocarse…" rows={5} />
               </label>
+              <label>FORMA DE TRABAJO
+                <select value={workflow} onChange={(event) => setWorkflow(event.target.value as "single" | "team")}>
+                  <option value="single">Una sesión · ciclo completo</option>
+                  <option value="team">Equipo · orquesta, construye e investiga</option>
+                </select>
+              </label>
+              <div className="role-preview" aria-label="Modelos preferidos">
+                {(foundryAgent === "claude" ? ["Fable 5.1", "Opus", "Sonnet"] : ["GPT 6 Astra", "Sol", "Terra"]).map((name, index) => (
+                  <div key={name}><strong>{name}</strong><small>{["Orquesta y audita", "Construye", "Investiga"][index]}</small></div>
+                ))}
+              </div>
               <div className="button-row">
                 <button type="button" className="button--primary" onClick={() => void forge()} disabled={foundryBusy}>FORJAR PROMPT</button>
                 <button type="button" onClick={() => void refine()} disabled={foundryBusy || !objective.trim()}>REFINAR</button>
@@ -700,6 +754,17 @@ export default function App() {
               <p className={`inline-status ${foundryMessage?.includes("todavía") ? "inline-status--warning" : ""}`} role="status" aria-live="polite">
                 {foundryMessage || (foundryAvailable === false ? "Motor Foundry no conectado; los controles muestran el contrato esperado." : "Seleccioná proyecto, agente, modo y objetivo.")}
               </p>
+              {mission && <div className="mission-panel">
+                <span className="eyebrow">MISIÓN PREPARADA · {mission.id.slice(0, 8)}</span>
+                <p>{mission.workflow === "team" ? "Equipo" : "Sesión única"} · {mission.tool} · {mission.projectIds.length} proyecto(s)</p>
+                <div className="mission-actions">
+                  {(mission.workflow === "team" ? ["orchestrator", "builder", "researcher"] as const : ["orchestrator"] as const).map((role) => (
+                    <button type="button" key={role} onClick={() => openMissionRole(mission, role)}>{mission.profiles[role].label} · {role === "orchestrator" ? "Orquestador" : role === "builder" ? "Constructor" : "Investigador"}</button>
+                  ))}
+                  <button type="button" disabled={foundryBusy} onClick={() => void readDeliveries()}>Consultar encargos y entregas</button>
+                </div>
+                <small>Modelos preferidos, editables al iniciar. La bandeja no despierta sesiones inactivas; los estados los declara cada rol.</small>
+              </div>}
             </div>
           </Panel>
 
@@ -788,12 +853,21 @@ export default function App() {
           <button type="button" className="icon-button" aria-label="Cerrar prompt" onClick={() => promptDialogRef.current?.close()}>×</button>
         </div>
         <label className="sr-only" htmlFor="forged-prompt">Prompt generado</label>
+        <label className="dialog-field">MODELO AL INICIAR
+          <input value={launchModel} onChange={(event) => setLaunchModel(event.target.value)} maxLength={120} placeholder="Vacío conserva el modelo configurado" />
+        </label>
+        <p className="dialog-description">Confirmás el lanzamiento en {launchContext.projectIds.length} proyecto(s) del prompt. El proveedor debe tener disponible el modelo elegido.</p>
         <textarea id="forged-prompt" className="prompt-output" value={forgedPrompt} readOnly />
         <div className="dialog-actions">
           <button type="button" className="button--primary" onClick={() => void copyPrompt()}>COPIAR</button>
-          <button type="button" onClick={() => void launchAgent()}>LANZAR {foundryAgent.toUpperCase()}</button>
+          <button type="button" disabled={launchBusy} onClick={() => void launchAgent()}>{launchBusy ? "INICIANDO…" : `LANZAR ${launchContext.tool.toUpperCase()}`}</button>
           <button type="button" onClick={() => promptDialogRef.current?.close()}>CERRAR</button>
         </div>
+      </dialog>
+
+      <dialog ref={deliveryDialogRef} className="command-dialog command-dialog--wide" aria-label="Bandeja compartida">
+        <div className="dialog-heading"><h2>Encargos y entregas</h2><button type="button" onClick={() => deliveryDialogRef.current?.close()}>Cerrar bandeja</button></div>
+        <pre className="mission-deliveries">{deliveryText}</pre>
       </dialog>
 
       <dialog ref={projectDialogRef} className="command-dialog command-dialog--project" onClose={() => {
