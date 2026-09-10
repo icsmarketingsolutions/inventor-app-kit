@@ -20,7 +20,7 @@
     "desktop:uninstall": "pwsh -NoProfile -File ./scripts/desktop/uninstall-app.ps1"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.112.4",
+    "@supabase/supabase-js": "2.116.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
