@@ -2,6 +2,12 @@
 
 ## Producto
 
+El HUD ordena accesos rápidos, Atlas dominante y una columna de herramientas con selector
+Foundry/Voz/Consola. Las herramientas permanecen montadas al ocultarse para conservar texto y
+grabaciones. Los atajos y envíos de voz activan la herramienta antes de desplazar el foco visual.
+Memoria, directivas y actividad forman una fila de apoyo; estado y proyectos se consultan en un
+desplegable. En móvil el Atlas aparece primero, seguido por herramientas y seguimiento.
+
 INVENTOR O.S. es la aplicación principal del kit. Coordina proyectos y agentes desde una ventana
 local. El generador de aplicaciones y el preset Supabase continúan como herramientas secundarias.
 

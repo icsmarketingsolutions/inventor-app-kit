@@ -585,7 +585,11 @@ export default function App() {
     projectDialogRef.current?.close();
   };
 
-  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const [activeTool, setActiveTool] = useState("prompt-foundry");
+  const scrollTo = (id: string) => {
+    if (["prompt-foundry", "voice-transcription", "ollama-console"].includes(id)) setActiveTool(id);
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
+  };
 
   return (
     <div className="app-shell">
@@ -615,83 +619,7 @@ export default function App() {
       </div>
 
       <main id="main-content" className="dashboard">
-        <aside className="dashboard-column" aria-label="Estado de proyectos">
-          <Panel title="SYSTEM VITALS" meta="git local en vivo">
-            <SystemVitals projects={projects} loading={coreLoading} error={projectsError} />
-          </Panel>
-          <Panel title="MEMORY VITALS" meta={status ? `${status.memory.notes} notas` : "—"}>
-            <dl className="vital-grid">
-              <div><dt>NOTAS</dt><dd>{status?.memory.notes ?? "—"}</dd></div>
-              <div><dt>INBOX</dt><dd>{status?.memory.inbox ?? "—"}</dd></div>
-              <div><dt>PROYECTOS</dt><dd>{status ? `${status.projects.available}/${status.projects.total}` : "—"}</dd></div>
-              <div><dt>STORAGE</dt><dd>{status?.storage === "local" ? "LOCAL" : "OFF"}</dd></div>
-            </dl>
-          </Panel>
-          <Panel title="CAPABILITIES" meta="estado real">
-            <ul className="capability-list">
-              <li><span>Markdown + Obsidian</span><span className={`badge ${status?.storage === "local" ? "badge--ok" : "badge--danger"}`}>{status?.storage === "local" ? "LISTO" : "OFF"}</span></li>
-              <li><span>Prompt Foundry</span><span className={`badge ${foundryAvailable ? "badge--ok" : ""}`}>{foundryAvailable === null ? "…" : foundryAvailable ? "LISTO" : "NO CONECTADO"}</span></li>
-              <li>
-                <span>Ollama local</span>
-                <span className={`badge ${ollamaHasModel ? "badge--ok" : ollamaConnectedWithoutModel ? "badge--warning" : ""}`}>
-                  {ollamaHasModel ? "LISTO" : ollamaConnectedWithoutModel ? "SIN MODELO" : ollama.state === "checking" ? "…" : "NO CONECTADO"}
-                </span>
-              </li>
-              <li><span>Agent Ops</span><span className={`badge ${activityState === "ready" ? "badge--ok" : ""}`}>{activityState === "ready" ? "LISTO" : activityState === "checking" ? "…" : "NO CONECTADO"}</span></li>
-              <li><span>Voz local</span><span className={`badge ${voice.available ? "badge--ok" : "badge--warning"}`}>{voice.state === "checking" ? "…" : voice.available ? "LISTO" : "SIN MOTOR"}</span></li>
-            </ul>
-          </Panel>
-        </aside>
-
-        <div className="dashboard-column dashboard-column--center">
-          <Panel id="memory-graph" title="MEMORY ATLAS" meta="explorá · conectá · descubrí" className="graph-panel">
-            <MemoryGraph graph={graph} loading={graphLoading} error={graphError} onOpenNote={openNote} onRetry={refreshGraph} />
-            <div className="primary-directive">
-              <span>PRIMARY DIRECTIVE</span>
-              <strong>{primaryDirective || "Sin directivas pendientes ✓"}</strong>
-            </div>
-          </Panel>
-
-          <Panel id="ollama-console" title="CONSOLA LOCAL" meta={ollamaHasModel ? `Ollama · ${ollama.model}` : ollamaConnectedWithoutModel ? "Ollama · sin modelos" : "Ollama opcional"}>
-            <div ref={chatLogRef} className="chat-log" aria-live="polite" aria-label="Conversación con el modelo local">
-              {messages.length === 0 && (
-                <p className="panel-state">
-                  {ollamaHasModel
-                    ? "Escribí una orden para el modelo local."
-                    : ollamaConnectedWithoutModel
-                      ? "Ollama está conectado, pero necesitás descargar un modelo antes de conversar."
-                      : "La consola mostrará respuestas solo cuando Ollama y su endpoint local estén disponibles."}
-                </p>
-              )}
-              {messages.map((message) => (
-                <div key={message.id} className={`chat-message chat-message--${message.role}`}>
-                  {message.meta && <span>{message.meta}</span>}
-                  <p>{message.text}</p>
-                </div>
-              ))}
-            </div>
-            <form className="command-form" onSubmit={submitChat}>
-              <label className="sr-only" htmlFor="local-command">Orden para Ollama</label>
-              <input id="local-command" value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="preguntá, resumí, explorá una idea…" autoComplete="off" />
-              <button type="submit" disabled={chatBusy || !chatInput.trim() || !ollamaHasModel}>{chatBusy ? "PENSANDO…" : "ENVIAR"}</button>
-            </form>
-          </Panel>
-
-          <Panel id="voice-transcription" title="VOICE TRANSCRIPTION" meta={voice.available ? "Whisper · offline" : "instalación opcional"}>
-            <VoiceTranscriber
-              onStatus={setVoice}
-              onUseFoundry={(text) => { setObjective((current) => current.trim() ? `${current.trimEnd()}\n\n${text}` : text); scrollTo("prompt-foundry"); }}
-              onUseConsole={(text) => { setChatInput((current) => current.trim() ? `${current.trimEnd()}\n\n${text}` : text); scrollTo("ollama-console"); }}
-              onMemorySaved={async () => { await refresh(); }}
-            />
-          </Panel>
-
-          <Panel title="ACTIVITY / AGENT OPS" meta="sin datos simulados">
-            <ActivityPanel activity={activity} state={activityState} error={activityError} />
-          </Panel>
-        </div>
-
-        <aside className="dashboard-column" aria-label="Comandos y memoria">
+        <div className="workspace-shortcuts">
           <Panel title="COMMAND DECK" meta={status?.ok ? "local" : "standby"}>
             <nav className="command-deck" aria-label="Atajos del centro de comando">
               <button type="button" onClick={() => scrollTo("prompt-foundry")}>▸ PROMPT</button>
@@ -702,7 +630,23 @@ export default function App() {
               <button type="button" onClick={() => projectDialogRef.current?.showModal()}>＋ NUEVO PROYECTO</button>
             </nav>
           </Panel>
-
+        </div>
+        <div className="dashboard-column dashboard-column--center">
+          <Panel id="memory-graph" title="MEMORY ATLAS" meta="explorá · conectá · descubrí" className="graph-panel">
+            <MemoryGraph graph={graph} loading={graphLoading} error={graphError} onOpenNote={openNote} onRetry={refreshGraph} />
+            <div className="primary-directive">
+              <span>PRIMARY DIRECTIVE</span>
+              <strong>{primaryDirective || "Sin directivas pendientes ✓"}</strong>
+            </div>
+          </Panel>
+        </div>
+        <section className="workbench" aria-label="Herramientas de trabajo">
+          <nav className="tool-switcher" aria-label="Elegir herramienta">
+            {([['prompt-foundry', 'Foundry'], ['voice-transcription', 'Voz'], ['ollama-console', 'Consola']] as const).map(([id, label]) => (
+              <button type="button" key={id} aria-pressed={activeTool === id} aria-controls={id} onClick={() => setActiveTool(id)}>{label}</button>
+            ))}
+          </nav>
+          <div hidden={activeTool !== 'prompt-foundry'}>
           <Panel id="prompt-foundry" title="PROMPT FOUNDRY" meta="contratos para agentes">
             <div className="foundry-form">
               <fieldset>
@@ -754,8 +698,8 @@ export default function App() {
               <p className={`inline-status ${foundryMessage?.includes("todavía") ? "inline-status--warning" : ""}`} role="status" aria-live="polite">
                 {foundryMessage || (foundryAvailable === false ? "Motor Foundry no conectado; los controles muestran el contrato esperado." : "Seleccioná proyecto, agente, modo y objetivo.")}
               </p>
-              {mission && <div className="mission-panel">
-                <span className="eyebrow">MISIÓN PREPARADA · {mission.id.slice(0, 8)}</span>
+              {mission && <details className="mission-panel">
+                <summary>MISIÓN PREPARADA · {mission.id.slice(0, 8)}</summary>
                 <p>{mission.workflow === "team" ? "Equipo" : "Sesión única"} · {mission.tool} · {mission.projectIds.length} proyecto(s)</p>
                 <div className="mission-actions">
                   {(mission.workflow === "team" ? ["orchestrator", "builder", "researcher"] as const : ["orchestrator"] as const).map((role) => (
@@ -764,10 +708,74 @@ export default function App() {
                   <button type="button" disabled={foundryBusy} onClick={() => void readDeliveries()}>Consultar encargos y entregas</button>
                 </div>
                 <small>Modelos preferidos, editables al iniciar. La bandeja no despierta sesiones inactivas; los estados los declara cada rol.</small>
-              </div>}
+              </details>}
             </div>
           </Panel>
-
+          </div>
+          <div hidden={activeTool !== 'voice-transcription'}>
+          <Panel id="voice-transcription" title="VOICE TRANSCRIPTION" meta={voice.available ? "Whisper · offline" : "instalación opcional"}>
+            <VoiceTranscriber
+              onStatus={setVoice}
+              onUseFoundry={(text) => { setObjective((current) => current.trim() ? `${current.trimEnd()}\n\n${text}` : text); scrollTo("prompt-foundry"); }}
+              onUseConsole={(text) => { setChatInput((current) => current.trim() ? `${current.trimEnd()}\n\n${text}` : text); scrollTo("ollama-console"); }}
+              onMemorySaved={async () => { await refresh(); }}
+            />
+          </Panel>
+          </div>
+          <div hidden={activeTool !== 'ollama-console'}>
+          <Panel id="ollama-console" title="CONSOLA LOCAL" meta={ollamaHasModel ? `Ollama · ${ollama.model}` : ollamaConnectedWithoutModel ? "Ollama · sin modelos" : "Ollama opcional"}>
+            <div ref={chatLogRef} className="chat-log" aria-live="polite" aria-label="Conversación con el modelo local">
+              {messages.length === 0 && (
+                <p className="panel-state">
+                  {ollamaHasModel
+                    ? "Escribí una orden para el modelo local."
+                    : ollamaConnectedWithoutModel
+                      ? "Ollama está conectado, pero necesitás descargar un modelo antes de conversar."
+                      : "La consola mostrará respuestas solo cuando Ollama y su endpoint local estén disponibles."}
+                </p>
+              )}
+              {messages.map((message) => (
+                <div key={message.id} className={`chat-message chat-message--${message.role}`}>
+                  {message.meta && <span>{message.meta}</span>}
+                  <p>{message.text}</p>
+                </div>
+              ))}
+            </div>
+            <form className="command-form" onSubmit={submitChat}>
+              <label className="sr-only" htmlFor="local-command">Orden para Ollama</label>
+              <input id="local-command" value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="preguntá, resumí, explorá una idea…" autoComplete="off" />
+              <button type="submit" disabled={chatBusy || !chatInput.trim() || !ollamaHasModel}>{chatBusy ? "PENSANDO…" : "ENVIAR"}</button>
+            </form>
+          </Panel>
+          </div>
+        </section>
+        <section className="support-grid" aria-label="Memoria y seguimiento">
+          <Panel id="memory-explorer" title="MEMORIA" meta={status ? `${status.memory.notes} notas · inbox ${status.memory.inbox}` : "local"}>
+            <form className="compact-form" onSubmit={submitCapture}>
+              <label className="sr-only" htmlFor="quick-capture">Captura rápida</label>
+              <input id="quick-capture" value={capture} onChange={(event) => setCapture(event.target.value)} placeholder="captura rápida → inbox…" />
+              <button type="submit" disabled={memoryBusy || !capture.trim()}>+</button>
+            </form>
+            <label className="sr-only" htmlFor="memory-search">Buscar en la memoria</label>
+            <input id="memory-search" className="memory-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="buscar en el vault…" />
+            <div className="filter-chips" aria-label="Filtrar notas por carpeta">
+              <button type="button" className={activeFolder === "all" ? "is-active" : ""} onClick={() => setActiveFolder("all")}>TODAS</button>
+              {folders.map((folder) => <button type="button" key={folder} className={activeFolder === folder ? "is-active" : ""} onClick={() => setActiveFolder(folder)}>{folder}</button>)}
+            </div>
+            {(notesError || memoryMessage) && <p className={`inline-status ${notesError ? "inline-status--error" : ""}`} role={notesError ? "alert" : "status"}>{notesError || memoryMessage}</p>}
+            <ul className="note-list">
+              {filteredNotes.slice(0, 30).map((note) => (
+                <li key={note.path}>
+                  <button type="button" onClick={() => void openNote(note.path)} disabled={noteBusy}>
+                    <span>◆ {note.title}</span>
+                    <small>{note.folder} · {formatDate(note.modifiedAt)}</small>
+                    {note.excerpt && <em>{note.excerpt}</em>}
+                  </button>
+                </li>
+              ))}
+              {!notesError && filteredNotes.length === 0 && <li className="panel-state panel-state--compact">No hay notas para este filtro.</li>}
+            </ul>
+          </Panel>
           <Panel id="directives" title="DIRECTIVAS" meta={`${directives.filter((directive) => !directive.done).length} abiertas`}>
             {directiveError && <p className="inline-status inline-status--error" role="alert">{directiveError}</p>}
             <ul className="directive-list">
@@ -803,34 +811,40 @@ export default function App() {
               <button type="submit" disabled={directiveBusy || !newDirective.trim()}>+</button>
             </form>
           </Panel>
-
-          <Panel id="memory-explorer" title="MEMORIA" meta={status ? `${status.memory.notes} notas · inbox ${status.memory.inbox}` : "local"}>
-            <form className="compact-form" onSubmit={submitCapture}>
-              <label className="sr-only" htmlFor="quick-capture">Captura rápida</label>
-              <input id="quick-capture" value={capture} onChange={(event) => setCapture(event.target.value)} placeholder="captura rápida → inbox…" />
-              <button type="submit" disabled={memoryBusy || !capture.trim()}>+</button>
-            </form>
-            <label className="sr-only" htmlFor="memory-search">Buscar en la memoria</label>
-            <input id="memory-search" className="memory-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="buscar en el vault…" />
-            <div className="filter-chips" aria-label="Filtrar notas por carpeta">
-              <button type="button" className={activeFolder === "all" ? "is-active" : ""} onClick={() => setActiveFolder("all")}>TODAS</button>
-              {folders.map((folder) => <button type="button" key={folder} className={activeFolder === folder ? "is-active" : ""} onClick={() => setActiveFolder(folder)}>{folder}</button>)}
-            </div>
-            {(notesError || memoryMessage) && <p className={`inline-status ${notesError ? "inline-status--error" : ""}`} role={notesError ? "alert" : "status"}>{notesError || memoryMessage}</p>}
-            <ul className="note-list">
-              {filteredNotes.slice(0, 30).map((note) => (
-                <li key={note.path}>
-                  <button type="button" onClick={() => void openNote(note.path)} disabled={noteBusy}>
-                    <span>◆ {note.title}</span>
-                    <small>{note.folder} · {formatDate(note.modifiedAt)}</small>
-                    {note.excerpt && <em>{note.excerpt}</em>}
-                  </button>
-                </li>
-              ))}
-              {!notesError && filteredNotes.length === 0 && <li className="panel-state panel-state--compact">No hay notas para este filtro.</li>}
+          <Panel title="ACTIVITY / AGENT OPS" meta="sin datos simulados">
+            <ActivityPanel activity={activity} state={activityState} error={activityError} />
+          </Panel>
+        </section>
+        <details className="system-drawer">
+          <summary>Estado del sistema y proyectos</summary>
+          <div className="support-grid">
+          <Panel title="SYSTEM VITALS" meta="git local en vivo">
+            <SystemVitals projects={projects} loading={coreLoading} error={projectsError} />
+          </Panel>
+          <Panel title="MEMORY VITALS" meta={status ? `${status.memory.notes} notas` : "—"}>
+            <dl className="vital-grid">
+              <div><dt>NOTAS</dt><dd>{status?.memory.notes ?? "—"}</dd></div>
+              <div><dt>INBOX</dt><dd>{status?.memory.inbox ?? "—"}</dd></div>
+              <div><dt>PROYECTOS</dt><dd>{status ? `${status.projects.available}/${status.projects.total}` : "—"}</dd></div>
+              <div><dt>STORAGE</dt><dd>{status?.storage === "local" ? "LOCAL" : "OFF"}</dd></div>
+            </dl>
+          </Panel>
+          <Panel title="CAPABILITIES" meta="estado real">
+            <ul className="capability-list">
+              <li><span>Markdown + Obsidian</span><span className={`badge ${status?.storage === "local" ? "badge--ok" : "badge--danger"}`}>{status?.storage === "local" ? "LISTO" : "OFF"}</span></li>
+              <li><span>Prompt Foundry</span><span className={`badge ${foundryAvailable ? "badge--ok" : ""}`}>{foundryAvailable === null ? "…" : foundryAvailable ? "LISTO" : "NO CONECTADO"}</span></li>
+              <li>
+                <span>Ollama local</span>
+                <span className={`badge ${ollamaHasModel ? "badge--ok" : ollamaConnectedWithoutModel ? "badge--warning" : ""}`}>
+                  {ollamaHasModel ? "LISTO" : ollamaConnectedWithoutModel ? "SIN MODELO" : ollama.state === "checking" ? "…" : "NO CONECTADO"}
+                </span>
+              </li>
+              <li><span>Agent Ops</span><span className={`badge ${activityState === "ready" ? "badge--ok" : ""}`}>{activityState === "ready" ? "LISTO" : activityState === "checking" ? "…" : "NO CONECTADO"}</span></li>
+              <li><span>Voz local</span><span className={`badge ${voice.available ? "badge--ok" : "badge--warning"}`}>{voice.state === "checking" ? "…" : voice.available ? "LISTO" : "SIN MOTOR"}</span></li>
             </ul>
           </Panel>
-        </aside>
+          </div>
+        </details>
       </main>
 
       <dialog ref={noteDialogRef} className="command-dialog" onClose={() => setSelectedNote(null)}>

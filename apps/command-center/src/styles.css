@@ -1107,11 +1107,11 @@ textarea::placeholder {
   }
 
   .dashboard {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .dashboard-column--center {
-    order: -1;
+    order: 0;
   }
 
   .activity-grid {
@@ -1171,7 +1171,6 @@ textarea::placeholder {
     align-items: flex-start;
   }
 
-  .graph-shell,
   .memory-graph {
     min-height: 310px;
     height: 310px;
@@ -1283,6 +1282,47 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .command-dialog[open], .atlas-dialog[open] { animation: panel-arrive .2s ease-out; }
 @keyframes panel-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 720px) { .atlas-toolbar { padding: 10px; } .memory-graph { height: 320px; } .atlas-dialog { width: 96vw; } }
+/* Workspace hierarchy: navigation, Atlas + one active tool, supporting context. */
+.dashboard { grid-template-columns: minmax(0, 1fr) minmax(300px, 350px); gap: 16px; }
+.workspace-shortcuts, .support-grid, .system-drawer { grid-column: 1 / -1; min-width: 0; }
+.workspace-shortcuts > .panel { padding: 8px; background: #100e0b; box-shadow: none; }
+.workspace-shortcuts .panel-heading { display: none; }
+.workspace-shortcuts .command-deck { display: flex; flex-wrap: wrap; gap: 6px; }
+.workspace-shortcuts button { flex: 1 1 110px; min-height: 36px; text-align: center; }
+.workbench { min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: #12100c; overflow: hidden; }
+.workbench > div > .panel { border: 0; border-radius: 0; box-shadow: none; animation: none; }
+.workbench > [hidden] { display: none; }
+.tool-switcher { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px; gap: 4px; border-bottom: 1px solid var(--border); }
+.tool-switcher button { min-height: 40px; border-color: transparent; background: transparent; text-align: center; }
+.tool-switcher button[aria-pressed="true"] { background: #e8a33d18; border-color: #926a34; color: var(--amber-bright); }
+.workbench .voice-transcript { min-height: 180px; height: 210px; }
+.workbench .foundry-form textarea { min-height: 110px; }
+.workbench .voice-monitor { padding: 10px; }
+.workbench .role-preview { padding: 8px 10px; gap: 5px; }
+.workbench .chat-log { min-height: 240px; max-height: 420px; }
+.dashboard-column--center > .graph-panel .memory-graph { height: clamp(320px, 44vh, 500px); }
+.atlas-detail { padding: 10px 12px; margin: 8px 12px; }
+.atlas-detail > strong { font-size: 12px; }
+.atlas-detail p { margin: 6px 0; }
+.atlas-detail .atlas-results { max-height: 72px; overflow: auto; }
+.graph-shell > .atlas-results { max-height: 76px; }
+.primary-directive { padding: 10px; }
+.support-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.support-grid .note-list, .support-grid .directive-list { max-height: 260px; overflow: auto; }
+.system-drawer { border-top: 1px solid var(--border); padding-top: 12px; }
+.system-drawer > summary { color: var(--muted); cursor: pointer; padding: 10px 0; font-size: 12px; }
+.system-drawer[open] > summary { margin-bottom: 12px; }
+.mission-panel > summary { cursor: pointer; color: var(--amber); font-size: 11px; }
+@media (max-width: 780px) {
+  .dashboard { grid-template-columns: minmax(0, 1fr); }
+  .support-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .support-grid > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 520px) {
+  .support-grid { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-column--center > .graph-panel .memory-graph { height: 310px; }
+  .workspace-shortcuts button { flex-basis: 28%; font-size: 9px; }
+}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
